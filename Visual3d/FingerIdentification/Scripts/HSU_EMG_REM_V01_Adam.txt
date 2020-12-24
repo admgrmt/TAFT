@@ -34,22 +34,28 @@ Assign_Tags_To_Files
 ! Select running files to identify Foot strike and Toe off using Foot switch
 ! ===========================================================================
 
+### Picks file that we will be working with based off of tags
 Select_Active_File
 /FILE_NAME=RUN
 ;
 
+### makes footswitch events to work around: beginning of the trail _ not gait parameters just yet...
 Event_Explicit
 /EVENT_NAME=START_TRIAL
 ! /FRAME=
 /TIME=2
 ;
 
+### Generates events based off of timing - in this case they are looking for 20 seconds of a trial.
 Event_Explicit
 /EVENT_NAME=END_TRIAL
 ! /FRAME=
 /TIME=20
 ;
 
+### Takes signal from FS (found on ACCX9) X component
+### between time 2 and 20 (see above)
+#### what if we change signal component to Y?
 Event_Global_Minimum
 /RESULT_EVENT_NAME=FSR_XMin
 /SIGNAL_TYPES=ANALOG
@@ -67,6 +73,8 @@ Event_Global_Minimum
 ! /THRESHOLD=
 ;
 
+### Takes signal from FS (found on ACCY9) X Component
+### between time 2 and 20 (see above)
 Event_Global_Minimum
 /RESULT_EVENT_NAME=FSR_YMin
 /SIGNAL_TYPES=ANALOG
@@ -84,6 +92,10 @@ Event_Global_Minimum
 ! /THRESHOLD=
 ;
 
+### Takes signal that we just created 
+### ! means to comment out, so those parts are being ignored
+### Creates a metric name in the results for FSR MIN X_Value
+### Creates and event named FSR XMIN
 Metric_Signal_Value_At_Event
 /SIGNAL_TYPES=ANALOG
 ! /SIGNAL_FOLDER=ORIGINAL
@@ -116,6 +128,10 @@ Metric_Signal_Value_At_Event
 ! /RETAIN_NO_DATA_VALUES=FALSE
 ;
 
+
+### Subtracts the FSR_Min X Value from the ACC X value
+### Renames as FSR_X_Zeroed!
+
 Subtract_Constant_From_Signals
 /SIGNAL_TYPES=ANALOG
 ! /SIGNAL_FOLDER=ORIGINAL
@@ -139,6 +155,9 @@ Subtract_Constant_From_Signals
 /APPLY_AS_SUFFIX_TO_SIGNAL_NAME=FALSE
 /CONSTANT=METRIC::PROCESSED::FSR_MIN Y_VALUE
 ;
+
+### Sets an event threshold fir RFS and LEFT Footstrike going up 
+### Threshold for here is set to 3...
 
 Event_Threshold
 /RESULT_EVENT_NAME=RIGHT FOOT STRIKE
@@ -186,66 +205,6 @@ Event_Threshold
 ! /ENSURE_FRAMES_AFTER=FALSE
 ;
 
-! ===========================================================================
-! Select ELLIPTICAL files to identify Foot strike and Toe off using Accelerometer
-! ===========================================================================
-
-
-Select_Active_File
-/FILE_NAME=ELLIPTICAL
-! /QUERY=
-;
-
-Lowpass_Filter
-/SIGNAL_TYPES=ANALOG
-! /SIGNAL_FOLDER=ORIGINAL
-/SIGNAL_NAMES=ACC_ELLIP: ACC X 10
-/RESULT_FOLDER=PROCESSED
-/RESULT_SUFFIX=FILT
-! /FILTER_CLASS=BUTTERWORTH
-! /FREQUENCY_CUTOFF=6.0
-! /NUM_REFLECTED=6
-! /NUM_EXTRAPOLATED=0
-! /TOTAL_BUFFER_SIZE=6
-! /NUM_BIDIRECTIONAL_PASSES=1
-;
-
-Event_Maximum
-/RESULT_EVENT_NAME=RIGHT FOOT STRIKE
-/SIGNAL_TYPES=ANALOG
-/SIGNAL_FOLDER=PROCESSED
-/SIGNAL_NAMES=ACC: ACC X 10FILT
-/SIGNAL_COMPONENTS=X
-! /FRAME_OFFSET=0
-! /TIME_OFFSET=
-! /EVENT_SEQUENCE=
-! /EXCLUDE_EVENTS=
-! /EVENT_SEQUENCE_INSTANCE=0
-! /EVENT_SUBSEQUENCE=
-! /SUBSEQUENCE_EXCLUDE_EVENTS=
-! /EVENT_SUBSEQUENCE_INSTANCE=0
-! /EVENT_INSTANCE=0
-! /FRAME_WINDOW=8
-! /THRESHOLD=
-;
-
-Event_Global_Minimum
-/RESULT_EVENT_NAME=RIGHT FOOT OFF
-/SIGNAL_TYPES=ANALOG
-/SIGNAL_FOLDER=PROCESSED
-/SIGNAL_NAMES=ACC: ACC X 10FILT
-/SIGNAL_COMPONENTS=X
-! /FRAME_OFFSET=0
-! /TIME_OFFSET=
-/EVENT_SEQUENCE=RIGHT FOOT STRIKE+RIGHT FOOT STRIKE
-! /EXCLUDE_EVENTS=
-! /EVENT_SEQUENCE_INSTANCE=0
-! /EVENT_SUBSEQUENCE=
-! /SUBSEQUENCE_EXCLUDE_EVENTS=
-! /EVENT_SUBSEQUENCE_INSTANCE=0
-! /THRESHOLD=
-;
-
 ! ---------------------------------------------------------------------------------
 !  Select files to define first 10 strides of all running trials
 ! ---------------------------------------------------------------------------------
@@ -254,12 +213,16 @@ Select_Active_File
 /FILE_NAME=LOCO
 ;
 
+### Setting beginning frame at 1
 Event_Explicit
 /EVENT_NAME=START
 /FRAME=1
 ! /TIME=
 ;
 
+### Creates a name for right foot strike
+### Makes a New event name for the 11th instance of Right Foot strike
+### Names it 10 and generates 10 frames off of 
 Event_Copy
 /EVENT_NAME=RIGHT FOOT STRIKE
 /NEW_EVENT_NAME=END
@@ -274,6 +237,7 @@ Event_Copy
 ! /PERCENT_OFFSET=
 ;
 
+### Makes a copied event for HS _ Right foot strike
 Event_Copy
 /EVENT_NAME=RIGHT FOOT STRIKE
 /NEW_EVENT_NAME=RHS
@@ -288,6 +252,8 @@ Event_Copy
 ! /PERCENT_OFFSET=
 ;
 
+### Makes a copied even for right toe off based off fo Right foot off
+### Within the sequence of start and end
 Event_Copy
 /EVENT_NAME=RIGHT FOOT OFF
 /NEW_EVENT_NAME=RTO
@@ -306,6 +272,7 @@ Event_Copy
 !  Define Event Sequences to represent 10% intervals, each gait cycle
 ! ------------------------------------------------------------------------------------------------------------
 
+### Defines one gait cycle as two steps "RHS + RHS"S
 Event_Define_Event_Sequence
 /EVENT_SEQUENCE_NAME=RCYCLE
 /EVENT_SEQUENCE=RHS+RHS
@@ -321,6 +288,7 @@ Event_Define_Event_Sequence
 !  Define Event Sequences for time in stance
 ! ------------------------------------------------------------------------------
 
+### defines stance between RHS and RTO (defined earlier)
 Event_Define_Event_Sequence
 /EVENT_SEQUENCE_NAME=RSTANCE
 /EVENT_SEQUENCE=RHS+RTO
@@ -336,6 +304,7 @@ Event_Define_Event_Sequence
 !  Define Event Sequences for time in swing
 ! ------------------------------------------------------------------------------
 
+### defines stance between RHS and RTO
 Event_Define_Event_Sequence
 /EVENT_SEQUENCE_NAME=RSWING
 /EVENT_SEQUENCE=RTO+RHS
@@ -347,12 +316,18 @@ Event_Define_Event_Sequence
 /EVENT_SEQUENCE_INSTANCE=0
 ;
 
+
+! ------------------------------------------------------------------------------
+!  Applies a for each to the code _ makes sequence timing
+! ------------------------------------------------------------------------------
+
 For_Each
 /ITERATION_PARAMETER_NAME=NUM_ZERO_BASED
 /ITERATION_PARAMETER_COUNT_NAME=NUM_ONE_BASED
 /ITEMS=0+1+2+3+4+5+6+7+8+9
 ;
 
+### splits cycle into percentages
 Set_Pipeline_Parameter_From_Expression
  ! Start interval will be 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100
  /PARAMETER_NAME=OFFSET1
@@ -392,6 +367,10 @@ Select_Active_File
 /FILE_NAME=RUN
 ;
 
+### Selects running files
+### Copies original Analog signal folder folder to not break anything
+#### Copied to EMG Original
+
 Copy_Folder
 /SIGNAL_TYPES=ANALOG
 /EXISTING_FOLDER=ORIGINAL
@@ -399,6 +378,8 @@ Copy_Folder
 ! /OVERWRITE_EXISTING_SIGNALS=FALSE
 ;
 
+### Removes signals from code _ ACC Channels that were not needed; ACC from EMG files.
+### This folder purely becomes an EMG signals folder
 Remove_Signals
 /SIGNAL_TYPES=ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG
 /SIGNAL_FOLDER=EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL
@@ -406,150 +387,22 @@ Remove_Signals
 ! /INCLUDE_MODELS=FALSE
 ;
 
-! =================================================================================
-! Rename the elliptical trial signal names so that the names will be the same in all resulting commands
-! =================================================================================
-
-Select_Active_File
-/FILE_NAME=ELLIPTICAL
-;
-
-Copy_Folder
-/SIGNAL_TYPES=ANALOG
-/EXISTING_FOLDER=ORIGINAL
-/NEW_FOLDER_NAME=EMG ORIGINAL
-! /OVERWRITE_EXISTING_SIGNALS=FALSE
-;
-
-Remove_Signals
-/SIGNAL_TYPES=ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG
-/SIGNAL_FOLDER=EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL
-/SIGNAL_NAMES=ACC: ACC X 10+ACC: ACC Y 10+ACC: ACC Z 10+ACC: EMG 10+BF: ACC X 6+BF: ACC Y 6+BF: ACC Z 6+GM: ACC X 8+GM: ACC Y 8+GM: ACC Z 8+LG: ACC X 3+LG: ACC Y 3+LG: ACC Z 3+RF: ACC X 5+RF: ACC Y 5+RF: ACC Z 5+SEM: ACC X 7+SEM: ACC Y 7+SEM: ACC Z 7+SOL: ACC X 2+SOL: ACC Y 2+SOL: ACC Z 2+TA: ACC X 1+TA: ACC Y 1+TA: ACC Z 1+VL: ACC X 4+VL: ACC Y 4+VL: ACC Z 4
-! /INCLUDE_MODELS=FALSE
-;
-
-! =================================================================================
-! Rename the TA MVC trial signal names so that the names will be the same in all resulting commands
-! =================================================================================
-
-Select_Active_File
-/FILE_NAME=TA
-;
-
-Copy_Folder
-/SIGNAL_TYPES=ANALOG
-/EXISTING_FOLDER=ORIGINAL
-/NEW_FOLDER_NAME=EMG ORIGINAL
-! /OVERWRITE_EXISTING_SIGNALS=FALSE
-;
-
-Remove_Signals
-/SIGNAL_TYPES=ANALOG+ANALOG+ANALOG+ANALOG+ANALOG
-/SIGNAL_FOLDER=EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL
-/SIGNAL_NAMES=TA: ACC X 1+TA: ACC Y 1+TA: ACC Z 1+TA: EMG 1->filter_FilterSlidingRMS74+TA: EMG 1->filter_FilterSlidingRMS81
-! /INCLUDE_MODELS=FALSE
-;
-
-! =================================================================================
-! Rename the SOL and LG MVC trial signal names so that the names will be the same in all resulting commands
-! Only need SOL tag name to get the files that contain both SOL and LG signals for MVC
-! =================================================================================
-
-Select_Active_File
-/FILE_NAME=SOL
-! /QUERY=
-;
-
-Copy_Folder
-/SIGNAL_TYPES=ANALOG
-/EXISTING_FOLDER=ORIGINAL
-/NEW_FOLDER_NAME=EMG ORIGINAL
-! /OVERWRITE_EXISTING_SIGNALS=FALSE
-;
-
-Remove_Signals
-/SIGNAL_TYPES=ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG
-/SIGNAL_FOLDER=EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL
-/SIGNAL_NAMES=LG: ACC X 3+LG: ACC Y 3+LG: ACC Z 3+LG: EMG 3->filter_FilterSlidingRMS101+LG: EMG 3->filter_FilterSlidingRMS91+SOL: ACC X 2+SOL: ACC Y 2+SOL: ACC Z 2+SOL: EMG 2->filter_FilterSlidingRMS88+SOL: EMG 2->filter_FilterSlidingRMS98
-! /INCLUDE_MODELS=FALSE
-;
-
-! =================================================================================
-! Rename the VL and RF MVC trial signal names so that the names will be the same in all resulting commands
-! =================================================================================
-
-Select_Active_File
-/FILE_NAME=VL
-;
-
-Copy_Folder
-/SIGNAL_TYPES=ANALOG
-/EXISTING_FOLDER=ORIGINAL
-/NEW_FOLDER_NAME=EMG ORIGINAL
-! /OVERWRITE_EXISTING_SIGNALS=FALSE
-;
-
-Remove_Signals
-/SIGNAL_TYPES=ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG
-/SIGNAL_FOLDER=EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL
-/SIGNAL_NAMES=RF: ACC X 5+RF: ACC Y 5+RF: ACC Z 5+RF: EMG 5->filter_FilterSlidingRMS111+RF: EMG 5->filter_FilterSlidingRMS121+VL: ACC X 4+VL: ACC Y 4+VL: ACC Z 4+VL: EMG 4->filter_FilterSlidingRMS108+VL: EMG 4->filter_FilterSlidingRMS118
-! /INCLUDE_MODELS=FALSE
-;
-
-! =================================================================================
-! Rename the BF and SEM MVC trial signal names so that the names will be the same in all resulting commands
-! =================================================================================
-
-Select_Active_File
-/FILE_NAME=BF
-;
-
-Copy_Folder
-/SIGNAL_TYPES=ANALOG
-/EXISTING_FOLDER=ORIGINAL
-/NEW_FOLDER_NAME=EMG ORIGINAL
-! /OVERWRITE_EXISTING_SIGNALS=FALSE
-;
-
-Remove_Signals
-/SIGNAL_TYPES=ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG
-/SIGNAL_FOLDER=EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL
-/SIGNAL_NAMES=BF: ACC X 6+BF: ACC Y 6+BF: ACC Z 6+BF: EMG 6->filter_FilterSlidingRMS128+BF: EMG 6->filter_FilterSlidingRMS138+SEM: ACC X 7+SEM: ACC Y 7+SEM: ACC Z 7+SEM: EMG 7->filter_FilterSlidingRMS131+SEM: EMG 7->filter_FilterSlidingRMS141
-! /INCLUDE_MODELS=FALSE
-;
-
-! =================================================================================
-! Rename the GM MVC trial signal names so that the names will be the same in all resulting commands
-! =================================================================================
-
-Select_Active_File
-/FILE_NAME=GM
-;
-
-Copy_Folder
-/SIGNAL_TYPES=ANALOG
-/EXISTING_FOLDER=ORIGINAL
-/NEW_FOLDER_NAME=EMG ORIGINAL
-! /OVERWRITE_EXISTING_SIGNALS=FALSE
-;
-
-Remove_Signals
-/SIGNAL_TYPES=ANALOG+ANALOG+ANALOG+ANALOG+ANALOG
-/SIGNAL_FOLDER=EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL
-/SIGNAL_NAMES=GM: ACC X 8+GM: ACC Y 8+GM: ACC Z 8+GM: EMG 8->filter_FilterSlidingRMS148+GM: EMG 8->filter_FilterSlidingRMS155
-! /INCLUDE_MODELS=FALSE
-;
+! =========================================================================
+! 
+! ========================================================================
 
 Select_Active_File
 /FILE_NAME=EMG
 ;
 
+### makes a list of parameter names from EMG_Original folder (now cleaned)
 Set_Pipeline_Parameter_To_List_Of_Signal_Names
 /PARAMETER_NAME=SIGNAL_LIST_ORIGINAL
 /SIGNAL_TYPES=ANALOG
 /SIGNAL_FOLDER=EMG ORIGINAL
 ;
 
+### Code to modify names but nothing seems to have been modified in SIGNAL_LIST_ORIGNAL parameter (see last command)
 Set_Pipeline_Parameter
 /PARAMETER_NAME=MODIFIED_ANALOG_NAMES
 /PARAMETER_VALUE=::SIGNAL_LIST_ORIGINAL
@@ -565,6 +418,10 @@ Delete_Folder
 /FOLDER=ANALOG_ORIG
 ;
 
+### Multiple EMG Original by derived, and form a new ANALOG_ORIG
+### Seems like it eliminated all of the signals that we did not want earlier.
+### We went through the trouble of removing, so now we "redo" the derived folder.
+
 Multiply_Signals_By_Constant
 /SIGNAL_TYPES=ANALOG
 /SIGNAL_FOLDER=EMG ORIGINAL
@@ -577,6 +434,7 @@ Multiply_Signals_By_Constant
 /CONSTANT=1
 ;
 
+### Renames original analog names to modified analog names -> for posterity?... 
 Rename_Signals
 ! /FILE_NAME=
 /SIGNAL_TYPES=DERIVED
@@ -708,744 +566,6 @@ Lowpass_Filter
 ! /NUM_BIDIRECTIONAL_PASSES=1
 ;
 
-! ---------------------------------------------------------------------------------
-!  Normalize to 25 ms of PEAK MVC
-! ---------------------------------------------------------------------------------
-
-Select_Active_File
-/FILE_NAME=MVC
-;
-
-Event_Explicit
-/EVENT_NAME= MVC_START
-! /FRAME=
- /TIME= 3.0
-;
-
-Event_Explicit
-/EVENT_NAME= MVC_END
-! /FRAME=
- /TIME= 6.0
-;
-
-! ---------------------------------------------------------------------------------
-!  Identify PEAK MVC for SOL and LG
-! ---------------------------------------------------------------------------------
-
-Select_Active_File
-/FILE_NAME=SOL
-;
-
-! ---------------------------------------------------------------------------------
-!  Identify GLOBAL PEAK MVC of SOL for normalization
-! ---------------------------------------------------------------------------------
-
-Event_Global_Maximum
-/RESULT_EVENT_NAME=SOL_MVC_PEAK
-/SIGNAL_TYPES=DERIVED
-/SIGNAL_FOLDER=LOW_LOW
-/SIGNAL_NAMES=SOL: EMG 2_LOW_LOW
-/SIGNAL_COMPONENTS=X
-! /FRAME_OFFSET=0
-! /TIME_OFFSET=
-/EVENT_SEQUENCE=MVC_START+MVC_END
-! /EXCLUDE_EVENTS=
-! /EVENT_SEQUENCE_INSTANCE=0
-! /EVENT_SUBSEQUENCE=
-! /SUBSEQUENCE_EXCLUDE_EVENTS=
-! /EVENT_SUBSEQUENCE_INSTANCE=0
-! /THRESHOLD=
-;
-
-Event_Copy
-/EVENT_NAME= SOL_MVC_PEAK
-/NEW_EVENT_NAME=SOL_MVC_PEAK_START
-! /EVENT_INSTANCE=0
-! /RANGE_INSTANCE=0
-! /EVENT_SEQUENCE=
-! /EXCLUDE_EVENTS=
-! /START_AT_EVENT=
-! /END_AT_EVENT=
-! /FRAME_OFFSET=
-/TIME_OFFSET=-.25
-! /PERCENT_OFFSET=
-;
-
-Event_Copy
-/EVENT_NAME=SOL_MVC_PEAK
-/NEW_EVENT_NAME=SOL_MVC_PEAK_END
-! /EVENT_INSTANCE=0
-! /RANGE_INSTANCE=0
-! /EVENT_SEQUENCE=
-! /EXCLUDE_EVENTS=
-! /START_AT_EVENT=
-! /END_AT_EVENT=
-! /FRAME_OFFSET=
-/TIME_OFFSET=.25
-! /PERCENT_OFFSET=
-;
-
-Metric_Mean
-! /RESULT_METRIC_FOLDER=PROCESSED
-/RESULT_METRIC_NAME=SOL_MVC_TRIAL_PEAK
-! /APPLY_AS_SUFFIX_TO_SIGNAL_NAME=FALSE
-/SIGNAL_TYPES=DERIVED
-/SIGNAL_FOLDER=RMS
-/SIGNAL_NAMES=SOL: EMG 2
-/COMPONENT_SEQUENCE=X
-/EVENT_SEQUENCE=SOL_MVC_PEAK_START+SOL_MVC_PEAK_END
-/EXCLUDE_EVENTS=
-/SEQUENCE_PERCENT_START=
-/SEQUENCE_PERCENT_END=
-/GENERATE_MEAN_AND_STDDEV=FALSE
-! /APPEND_TO_EXISTING_VALUES=FALSE
-;
-
-Metric_Maximum
-! /RESULT_METRIC_FOLDER=PROCESSED
-/RESULT_METRIC_NAME=SOL: EMG 2_MVC_GLOBAL_PEAK
-! /APPLY_AS_SUFFIX_TO_SIGNAL_NAME=FALSE
-/SIGNAL_TYPES=METRIC
-/SIGNAL_FOLDER=PROCESSED
-/SIGNAL_NAMES=SOL_MVC_TRIAL_PEAK
-/COMPONENT_SEQUENCE=X
-/EVENT_SEQUENCE=
-/EXCLUDE_EVENTS=
-/SEQUENCE_PERCENT_START=
-/SEQUENCE_PERCENT_END=
-/GENERATE_MEAN_AND_STDDEV=FALSE
-! /APPEND_TO_EXISTING_VALUES=FALSE
-/CREATE_GLOBAL_MAXIMUM=TRUE
-;
-
-! ---------------------------------------------------------------------------------
-!  Identify GLOBAL PEAK MVC of LG for normalization
-! ---------------------------------------------------------------------------------
-Event_Global_Maximum
-/RESULT_EVENT_NAME=LG_MVC_PEAK
-/SIGNAL_TYPES=DERIVED
-/SIGNAL_FOLDER=LOW_LOW
-/SIGNAL_NAMES=LG: EMG 3_LOW_LOW
-/SIGNAL_COMPONENTS=X
-! /FRAME_OFFSET=0
-! /TIME_OFFSET=
-/EVENT_SEQUENCE=MVC_START+MVC_END
-! /EXCLUDE_EVENTS=
-! /EVENT_SEQUENCE_INSTANCE=0
-! /EVENT_SUBSEQUENCE=
-! /SUBSEQUENCE_EXCLUDE_EVENTS=
-! /EVENT_SUBSEQUENCE_INSTANCE=0
-! /THRESHOLD=
-;
-
-Event_Copy
-/EVENT_NAME= LG_MVC_PEAK
-/NEW_EVENT_NAME=LG_MVC_PEAK_START
-! /EVENT_INSTANCE=0
-! /RANGE_INSTANCE=0
-! /EVENT_SEQUENCE=
-! /EXCLUDE_EVENTS=
-! /START_AT_EVENT=
-! /END_AT_EVENT=
-! /FRAME_OFFSET=
-/TIME_OFFSET=-.25
-! /PERCENT_OFFSET=
-;
-
-Event_Copy
-/EVENT_NAME=LG_MVC_PEAK
-/NEW_EVENT_NAME=LG_MVC_PEAK_END
-! /EVENT_INSTANCE=0
-! /RANGE_INSTANCE=0
-! /EVENT_SEQUENCE=
-! /EXCLUDE_EVENTS=
-! /START_AT_EVENT=
-! /END_AT_EVENT=
-! /FRAME_OFFSET=
-/TIME_OFFSET=.25
-! /PERCENT_OFFSET=
-;
-
-Metric_Mean
-! /RESULT_METRIC_FOLDER=PROCESSED
-/RESULT_METRIC_NAME=LG_MVC_TRIAL_PEAK
-! /APPLY_AS_SUFFIX_TO_SIGNAL_NAME=FALSE
-/SIGNAL_TYPES=DERIVED
-/SIGNAL_FOLDER=RMS
-/SIGNAL_NAMES=LG: EMG 3
-/COMPONENT_SEQUENCE=X
-/EVENT_SEQUENCE=LG_MVC_PEAK_START+LG_MVC_PEAK_END
-/EXCLUDE_EVENTS=
-/SEQUENCE_PERCENT_START=
-/SEQUENCE_PERCENT_END=
-/GENERATE_MEAN_AND_STDDEV=FALSE
-! /APPEND_TO_EXISTING_VALUES=FALSE
-;
-
-Metric_Maximum
-! /RESULT_METRIC_FOLDER=PROCESSED
-/RESULT_METRIC_NAME=LG: EMG 3_MVC_GLOBAL_PEAK
-! /APPLY_AS_SUFFIX_TO_SIGNAL_NAME=FALSE
-/SIGNAL_TYPES=METRIC
-/SIGNAL_FOLDER=PROCESSED
-/SIGNAL_NAMES=LG_MVC_TRIAL_PEAK
-/COMPONENT_SEQUENCE=X
-/EVENT_SEQUENCE=
-/EXCLUDE_EVENTS=
-/SEQUENCE_PERCENT_START=
-/SEQUENCE_PERCENT_END=
-/GENERATE_MEAN_AND_STDDEV=FALSE
-! /APPEND_TO_EXISTING_VALUES=FALSE
-/CREATE_GLOBAL_MAXIMUM=TRUE
-;
-
-! ---------------------------------------------------------------------------------
-!  Identify PEAK MVC for TA
-! ---------------------------------------------------------------------------------
-
-Select_Active_File
-/FILE_NAME=TA
-;
-
-! ---------------------------------------------------------------------------------
-!  Identify GLOBAL PEAK MVC of TA for normalization
-! ---------------------------------------------------------------------------------
-Event_Global_Maximum
-/RESULT_EVENT_NAME=TA_MVC_PEAK
-/SIGNAL_TYPES=DERIVED
-/SIGNAL_FOLDER=LOW_LOW
-/SIGNAL_NAMES=TA: EMG 1_LOW_LOW
-/SIGNAL_COMPONENTS=X
-! /FRAME_OFFSET=0
-! /TIME_OFFSET=
-/EVENT_SEQUENCE=MVC_START+MVC_END
-! /EXCLUDE_EVENTS=
-! /EVENT_SEQUENCE_INSTANCE=0
-! /EVENT_SUBSEQUENCE=
-! /SUBSEQUENCE_EXCLUDE_EVENTS=
-! /EVENT_SUBSEQUENCE_INSTANCE=0
-! /THRESHOLD=
-;
-
-Event_Copy
-/EVENT_NAME=TA_MVC_PEAK
-/NEW_EVENT_NAME=TA_MVC_PEAK_START
-! /EVENT_INSTANCE=0
-! /RANGE_INSTANCE=0
-! /EVENT_SEQUENCE=
-! /EXCLUDE_EVENTS=
-! /START_AT_EVENT=
-! /END_AT_EVENT=
-! /FRAME_OFFSET=
-/TIME_OFFSET=-.25
-! /PERCENT_OFFSET=
-;
-
-Event_Copy
-/EVENT_NAME=TA_MVC_PEAK
-/NEW_EVENT_NAME=TA_MVC_PEAK_END
-! /EVENT_INSTANCE=0
-! /RANGE_INSTANCE=0
-! /EVENT_SEQUENCE=
-! /EXCLUDE_EVENTS=
-! /START_AT_EVENT=
-! /END_AT_EVENT=
-! /FRAME_OFFSET=
-/TIME_OFFSET=.25
-! /PERCENT_OFFSET=
-;
-
-Metric_Mean
-! /RESULT_METRIC_FOLDER=PROCESSED
-/RESULT_METRIC_NAME=TA_MVC_TRIAL_PEAK
-! /APPLY_AS_SUFFIX_TO_SIGNAL_NAME=FALSE
-/SIGNAL_TYPES=DERIVED
-/SIGNAL_FOLDER=RMS
-/SIGNAL_NAMES=TA: EMG 1
-/COMPONENT_SEQUENCE=X
-/EVENT_SEQUENCE=TA_MVC_PEAK_START+TA_MVC_PEAK_END
-/EXCLUDE_EVENTS=
-/SEQUENCE_PERCENT_START=
-/SEQUENCE_PERCENT_END=
-/GENERATE_MEAN_AND_STDDEV=FALSE
-! /APPEND_TO_EXISTING_VALUES=FALSE
-;
-
-Metric_Maximum
-! /RESULT_METRIC_FOLDER=PROCESSED
-/RESULT_METRIC_NAME=TA: EMG 1_MVC_GLOBAL_PEAK
-! /APPLY_AS_SUFFIX_TO_SIGNAL_NAME=FALSE
-/SIGNAL_TYPES=METRIC
-/SIGNAL_FOLDER=PROCESSED
-/SIGNAL_NAMES=TA_MVC_TRIAL_PEAK
-/COMPONENT_SEQUENCE=X
-/EVENT_SEQUENCE=
-/EXCLUDE_EVENTS=
-/SEQUENCE_PERCENT_START=
-/SEQUENCE_PERCENT_END=
-/GENERATE_MEAN_AND_STDDEV=FALSE
-! /APPEND_TO_EXISTING_VALUES=FALSE
-/CREATE_GLOBAL_MAXIMUM=TRUE
-;
-
-! ---------------------------------------------------------------------------------
-!  Identify PEAK MVC for VL and RF
-! ---------------------------------------------------------------------------------
-
-Select_Active_File
-/FILE_NAME=VL
-;
-
-! ---------------------------------------------------------------------------------
-!  Identify GLOBAL PEAK MVC of VL normalization
-! ---------------------------------------------------------------------------------
-
-Event_Global_Maximum
-/RESULT_EVENT_NAME=VL_MVC_PEAK
-/SIGNAL_TYPES=DERIVED
-/SIGNAL_FOLDER=LOW_LOW
-/SIGNAL_NAMES=VL: EMG 4_LOW_LOW
-/SIGNAL_COMPONENTS=X
-! /FRAME_OFFSET=0
-! /TIME_OFFSET=
-/EVENT_SEQUENCE=MVC_START+MVC_END
-! /EXCLUDE_EVENTS=
-! /EVENT_SEQUENCE_INSTANCE=0
-! /EVENT_SUBSEQUENCE=
-! /SUBSEQUENCE_EXCLUDE_EVENTS=
-! /EVENT_SUBSEQUENCE_INSTANCE=0
-! /THRESHOLD=
-;
-
-Event_Copy
-/EVENT_NAME=VL_MVC_PEAK
-/NEW_EVENT_NAME=VL_MVC_PEAK_START
-! /EVENT_INSTANCE=0
-! /RANGE_INSTANCE=0
-! /EVENT_SEQUENCE=
-! /EXCLUDE_EVENTS=
-! /START_AT_EVENT=
-! /END_AT_EVENT=
-! /FRAME_OFFSET=
-/TIME_OFFSET=-.25
-! /PERCENT_OFFSET=
-;
-
-Event_Copy
-/EVENT_NAME=VL_MVC_PEAK
-/NEW_EVENT_NAME=VL_MVC_PEAK_END
-! /EVENT_INSTANCE=0
-! /RANGE_INSTANCE=0
-! /EVENT_SEQUENCE=
-! /EXCLUDE_EVENTS=
-! /START_AT_EVENT=
-! /END_AT_EVENT=
-! /FRAME_OFFSET=
-/TIME_OFFSET=.25
-! /PERCENT_OFFSET=
-;
-
-Metric_Mean
-/RESULT_METRIC_FOLDER=PROCESSED
-/RESULT_METRIC_NAME=VL_MVC_TRIAL_PEAK
-! /APPLY_AS_SUFFIX_TO_SIGNAL_NAME=FALSE
-/SIGNAL_TYPES=DERIVED
-/SIGNAL_FOLDER=RMS
-/SIGNAL_NAMES=VL: EMG 4
-/COMPONENT_SEQUENCE=X
-/EVENT_SEQUENCE=VL_MVC_PEAK_START+VL_MVC_PEAK_END
-/EXCLUDE_EVENTS=
-/SEQUENCE_PERCENT_START=
-/SEQUENCE_PERCENT_END=
-/GENERATE_MEAN_AND_STDDEV=FALSE
-! /APPEND_TO_EXISTING_VALUES=FALSE
-;
-
-Metric_Maximum
-! /RESULT_METRIC_FOLDER=PROCESSED
-/RESULT_METRIC_NAME=VL: EMG 4_MVC_GLOBAL_PEAK
-! /APPLY_AS_SUFFIX_TO_SIGNAL_NAME=FALSE
-/SIGNAL_TYPES=METRIC
-/SIGNAL_FOLDER=PROCESSED
-/SIGNAL_NAMES=VL_MVC_TRIAL_PEAK
-/COMPONENT_SEQUENCE=X
-/EVENT_SEQUENCE=
-/EXCLUDE_EVENTS=
-/SEQUENCE_PERCENT_START=
-/SEQUENCE_PERCENT_END=
-/GENERATE_MEAN_AND_STDDEV=FALSE
-! /APPEND_TO_EXISTING_VALUES=FALSE
-/CREATE_GLOBAL_MAXIMUM=TRUE
-;
-
-! ---------------------------------------------------------------------------------
-!  Identify GLOBAL PEAK MVC of RF for normalization
-! ---------------------------------------------------------------------------------
-Event_Global_Maximum
-/RESULT_EVENT_NAME=RF_MVC_PEAK
-/SIGNAL_TYPES=DERIVED
-/SIGNAL_FOLDER=LOW_LOW
-/SIGNAL_NAMES=RF: EMG 5_LOW_LOW
-/SIGNAL_COMPONENTS=X
-! /FRAME_OFFSET=0
-! /TIME_OFFSET=
-/EVENT_SEQUENCE=MVC_START+MVC_END
-! /EXCLUDE_EVENTS=
-! /EVENT_SEQUENCE_INSTANCE=0
-! /EVENT_SUBSEQUENCE=
-! /SUBSEQUENCE_EXCLUDE_EVENTS=
-! /EVENT_SUBSEQUENCE_INSTANCE=0
-! /THRESHOLD=
-;
-
-Event_Copy
-/EVENT_NAME=RF_MVC_PEAK
-/NEW_EVENT_NAME=RF_MVC_PEAK_START
-! /EVENT_INSTANCE=0
-! /RANGE_INSTANCE=0
-! /EVENT_SEQUENCE=
-! /EXCLUDE_EVENTS=
-! /START_AT_EVENT=
-! /END_AT_EVENT=
-! /FRAME_OFFSET=
-/TIME_OFFSET=-.25
-! /PERCENT_OFFSET=
-;
-
-Event_Copy
-/EVENT_NAME=RF_MVC_PEAK
-/NEW_EVENT_NAME=RF_MVC_PEAK_END
-! /EVENT_INSTANCE=0
-! /RANGE_INSTANCE=0
-! /EVENT_SEQUENCE=
-! /EXCLUDE_EVENTS=
-! /START_AT_EVENT=
-! /END_AT_EVENT=
-! /FRAME_OFFSET=
-/TIME_OFFSET=.25
-! /PERCENT_OFFSET=
-;
-
-Metric_Mean
-/RESULT_METRIC_FOLDER=PROCESSED
-/RESULT_METRIC_NAME=RF_MVC_TRIAL_PEAK
-! /APPLY_AS_SUFFIX_TO_SIGNAL_NAME=FALSE
-/SIGNAL_TYPES=DERIVED
-/SIGNAL_FOLDER=RMS
-/SIGNAL_NAMES=RF: EMG 5
-/COMPONENT_SEQUENCE=X
-/EVENT_SEQUENCE=RF_MVC_PEAK_START+RF_MVC_PEAK_END
-/EXCLUDE_EVENTS=
-/SEQUENCE_PERCENT_START=
-/SEQUENCE_PERCENT_END=
-/GENERATE_MEAN_AND_STDDEV=FALSE
-! /APPEND_TO_EXISTING_VALUES=FALSE
-;
-
-Metric_Maximum
-! /RESULT_METRIC_FOLDER=PROCESSED
-/RESULT_METRIC_NAME=RF: EMG 5_MVC_GLOBAL_PEAK
-! /APPLY_AS_SUFFIX_TO_SIGNAL_NAME=FALSE
-/SIGNAL_TYPES=METRIC
-/SIGNAL_FOLDER=PROCESSED
-/SIGNAL_NAMES=RF_MVC_TRIAL_PEAK
-/COMPONENT_SEQUENCE=X
-/EVENT_SEQUENCE=
-/EXCLUDE_EVENTS=
-/SEQUENCE_PERCENT_START=
-/SEQUENCE_PERCENT_END=
-/GENERATE_MEAN_AND_STDDEV=FALSE
-! /APPEND_TO_EXISTING_VALUES=FALSE
-/CREATE_GLOBAL_MAXIMUM=TRUE
-;
-
-! ---------------------------------------------------------------------------------
-!  Identify PEAK MVC for BF and SEM
-! ---------------------------------------------------------------------------------
-Select_Active_File
-/FILE_NAME=BF
-;
-
-! ---------------------------------------------------------------------------------
-!  Identify GLOBAL PEAK MVC of BF for normalization
-! ---------------------------------------------------------------------------------
-
-Event_Global_Maximum
-/RESULT_EVENT_NAME=BF_MVC_PEAK
-/SIGNAL_TYPES=DERIVED
-/SIGNAL_FOLDER=LOW_LOW
-/SIGNAL_NAMES=BF: EMG 6_LOW_LOW
-/SIGNAL_COMPONENTS=X
-! /FRAME_OFFSET=0
-! /TIME_OFFSET=
-/EVENT_SEQUENCE=MVC_START+MVC_END
-! /EXCLUDE_EVENTS=
-! /EVENT_SEQUENCE_INSTANCE=0
-! /EVENT_SUBSEQUENCE=
-! /SUBSEQUENCE_EXCLUDE_EVENTS=
-! /EVENT_SUBSEQUENCE_INSTANCE=0
-! /THRESHOLD=
-;
-
-Event_Copy
-/EVENT_NAME=BF_MVC_PEAK
-/NEW_EVENT_NAME=BF_MVC_PEAK_START
-! /EVENT_INSTANCE=0
-! /RANGE_INSTANCE=0
-! /EVENT_SEQUENCE=
-! /EXCLUDE_EVENTS=
-! /START_AT_EVENT=
-! /END_AT_EVENT=
-! /FRAME_OFFSET=
-/TIME_OFFSET=-.25
-! /PERCENT_OFFSET=
-;
-
-Event_Copy
-/EVENT_NAME=BF_MVC_PEAK
-/NEW_EVENT_NAME=BF_MVC_PEAK_END
-! /EVENT_INSTANCE=0
-! /RANGE_INSTANCE=0
-! /EVENT_SEQUENCE=
-! /EXCLUDE_EVENTS=
-! /START_AT_EVENT=
-! /END_AT_EVENT=
-! /FRAME_OFFSET=
-/TIME_OFFSET=.25
-! /PERCENT_OFFSET=
-;
-
-Metric_Mean
-/RESULT_METRIC_FOLDER=PROCESSED
-/RESULT_METRIC_NAME=BF_MVC_TRIAL_PEAK
-! /APPLY_AS_SUFFIX_TO_SIGNAL_NAME=FALSE
-/SIGNAL_TYPES=DERIVED
-/SIGNAL_FOLDER=RMS
-/SIGNAL_NAMES=BF: EMG 6
-/COMPONENT_SEQUENCE=X
-/EVENT_SEQUENCE=BF_MVC_PEAK_START+BF_MVC_PEAK_END
-/EXCLUDE_EVENTS=
-/SEQUENCE_PERCENT_START=
-/SEQUENCE_PERCENT_END=
-/GENERATE_MEAN_AND_STDDEV=FALSE
-! /APPEND_TO_EXISTING_VALUES=FALSE
-;
-
-Metric_Maximum
-/RESULT_METRIC_FOLDER=PROCESSED
-/RESULT_METRIC_NAME=BF: EMG 6_MVC_GLOBAL_PEAK
-! /APPLY_AS_SUFFIX_TO_SIGNAL_NAME=FALSE
-/SIGNAL_TYPES=METRIC
-/SIGNAL_FOLDER=PROCESSED
-/SIGNAL_NAMES=BF_MVC_TRIAL_PEAK
-/COMPONENT_SEQUENCE=X
-/EVENT_SEQUENCE=
-/EXCLUDE_EVENTS=
-/SEQUENCE_PERCENT_START=
-/SEQUENCE_PERCENT_END=
-/GENERATE_MEAN_AND_STDDEV=FALSE
-! /APPEND_TO_EXISTING_VALUES=FALSE
-/CREATE_GLOBAL_MAXIMUM=TRUE
-;
-
-! ---------------------------------------------------------------------------------
-!  Identify GLOBAL PEAK MVC of SEM for normalization
-! ---------------------------------------------------------------------------------
-Event_Global_Maximum
-/RESULT_EVENT_NAME=SEM_MVC_PEAK
-/SIGNAL_TYPES=DERIVED
-/SIGNAL_FOLDER=LOW_LOW
-/SIGNAL_NAMES=SEM: EMG 7_LOW_LOW
-/SIGNAL_COMPONENTS=X
-! /FRAME_OFFSET=0
-! /TIME_OFFSET=
-/EVENT_SEQUENCE=MVC_START+MVC_END
-! /EXCLUDE_EVENTS=
-! /EVENT_SEQUENCE_INSTANCE=0
-! /EVENT_SUBSEQUENCE=
-! /SUBSEQUENCE_EXCLUDE_EVENTS=
-! /EVENT_SUBSEQUENCE_INSTANCE=0
-! /THRESHOLD=
-;
-
-Event_Copy
-/EVENT_NAME=SEM_MVC_PEAK
-/NEW_EVENT_NAME=SEM_MVC_PEAK_START
-! /EVENT_INSTANCE=0
-! /RANGE_INSTANCE=0
-! /EVENT_SEQUENCE=
-! /EXCLUDE_EVENTS=
-! /START_AT_EVENT=
-! /END_AT_EVENT=
-! /FRAME_OFFSET=
-/TIME_OFFSET=-.25
-! /PERCENT_OFFSET=
-;
-
-Event_Copy
-/EVENT_NAME=SEM_MVC_PEAK
-/NEW_EVENT_NAME=SEM_MVC_PEAK_END
-! /EVENT_INSTANCE=0
-! /RANGE_INSTANCE=0
-! /EVENT_SEQUENCE=
-! /EXCLUDE_EVENTS=
-! /START_AT_EVENT=
-! /END_AT_EVENT=
-! /FRAME_OFFSET=
-/TIME_OFFSET=.25
-! /PERCENT_OFFSET=
-;
-
-Metric_Mean
-/RESULT_METRIC_FOLDER=PROCESSED
-/RESULT_METRIC_NAME=SEM_MVC_TRIAL_PEAK
-! /APPLY_AS_SUFFIX_TO_SIGNAL_NAME=FALSE
-/SIGNAL_TYPES=DERIVED
-/SIGNAL_FOLDER=RMS
-/SIGNAL_NAMES=SEM: EMG 7
-/COMPONENT_SEQUENCE=X
-/EVENT_SEQUENCE=SEM_MVC_PEAK_START+SEM_MVC_PEAK_END
-/EXCLUDE_EVENTS=
-/SEQUENCE_PERCENT_START=
-/SEQUENCE_PERCENT_END=
-/GENERATE_MEAN_AND_STDDEV=FALSE
-! /APPEND_TO_EXISTING_VALUES=FALSE
-;
-
-Metric_Maximum
-/RESULT_METRIC_FOLDER=PROCESSED
-/RESULT_METRIC_NAME=SEM: EMG 7_MVC_GLOBAL_PEAK
-! /APPLY_AS_SUFFIX_TO_SIGNAL_NAME=FALSE
-/SIGNAL_TYPES=METRIC
-/SIGNAL_FOLDER=PROCESSED
-/SIGNAL_NAMES=SEM_MVC_TRIAL_PEAK
-/COMPONENT_SEQUENCE=X
-/EVENT_SEQUENCE=
-/EXCLUDE_EVENTS=
-/SEQUENCE_PERCENT_START=
-/SEQUENCE_PERCENT_END=
-/GENERATE_MEAN_AND_STDDEV=FALSE
-! /APPEND_TO_EXISTING_VALUES=FALSE
-/CREATE_GLOBAL_MAXIMUM=TRUE
-;
-
-! ---------------------------------------------------------------------------------
-!  Identify PEAK MVC for GM
-! ---------------------------------------------------------------------------------
-Select_Active_File
-/FILE_NAME=GM
-;
-
-! ---------------------------------------------------------------------------------
-!  Identify GLOBAL PEAK MVC of GM for normalization
-! ---------------------------------------------------------------------------------
-Event_Global_Maximum
-/RESULT_EVENT_NAME=GM_MVC_PEAK
-/SIGNAL_TYPES=DERIVED
-/SIGNAL_FOLDER=LOW_LOW
-/SIGNAL_NAMES=GM: EMG 8_LOW_LOW
-/SIGNAL_COMPONENTS=X
-! /FRAME_OFFSET=0
-! /TIME_OFFSET=
-/EVENT_SEQUENCE=MVC_START+MVC_END
-! /EXCLUDE_EVENTS=
-! /EVENT_SEQUENCE_INSTANCE=0
-! /EVENT_SUBSEQUENCE=
-! /SUBSEQUENCE_EXCLUDE_EVENTS=
-! /EVENT_SUBSEQUENCE_INSTANCE=0
-! /THRESHOLD=
-;
-
-Event_Copy
-/EVENT_NAME=GM_MVC_PEAK
-/NEW_EVENT_NAME=GM_MVC_PEAK_START
-! /EVENT_INSTANCE=0
-! /RANGE_INSTANCE=0
-! /EVENT_SEQUENCE=
-! /EXCLUDE_EVENTS=
-! /START_AT_EVENT=
-! /END_AT_EVENT=
-! /FRAME_OFFSET=
-/TIME_OFFSET=-.25
-! /PERCENT_OFFSET=
-;
-
-Event_Copy
-/EVENT_NAME=GM_MVC_PEAK
-/NEW_EVENT_NAME=GM_MVC_PEAK_END
-! /EVENT_INSTANCE=0
-! /RANGE_INSTANCE=0
-! /EVENT_SEQUENCE=
-! /EXCLUDE_EVENTS=
-! /START_AT_EVENT=
-! /END_AT_EVENT=
-! /FRAME_OFFSET=
-/TIME_OFFSET=.25
-! /PERCENT_OFFSET=
-;
-
-Metric_Mean
-/RESULT_METRIC_FOLDER=PROCESSED
-/RESULT_METRIC_NAME=GM_MVC_TRIAL_PEAK
-! /APPLY_AS_SUFFIX_TO_SIGNAL_NAME=FALSE
-/SIGNAL_TYPES=DERIVED
-/SIGNAL_FOLDER=RMS
-/SIGNAL_NAMES=GM: EMG 8
-/COMPONENT_SEQUENCE=X
-/EVENT_SEQUENCE=GM_MVC_PEAK_START+GM_MVC_PEAK_END
-/EXCLUDE_EVENTS=
-/SEQUENCE_PERCENT_START=
-/SEQUENCE_PERCENT_END=
-/GENERATE_MEAN_AND_STDDEV=FALSE
-! /APPEND_TO_EXISTING_VALUES=FALSE
-;
-
-Metric_Maximum
-/RESULT_METRIC_FOLDER=PROCESSED
-/RESULT_METRIC_NAME=GM: EMG 8_MVC_GLOBAL_PEAK
-! /APPLY_AS_SUFFIX_TO_SIGNAL_NAME=FALSE
-/SIGNAL_TYPES=METRIC
-/SIGNAL_FOLDER=PROCESSED
-/SIGNAL_NAMES=GM_MVC_TRIAL_PEAK
-/COMPONENT_SEQUENCE=X
-/EVENT_SEQUENCE=
-/EXCLUDE_EVENTS=
-/SEQUENCE_PERCENT_START=
-/SEQUENCE_PERCENT_END=
-/GENERATE_MEAN_AND_STDDEV=FALSE
-! /APPEND_TO_EXISTING_VALUES=FALSE
-/CREATE_GLOBAL_MAXIMUM=TRUE
-;
-
-!--------------------------------------------------------------------------------------------------------------------
-! Normalize amplitude of each signal to Peak MVC value of each Muslce
-!------------------------------------------------------------------------------------------------------------------------
-
-
-Select_Active_File
-/FILE_NAME=LOCO
-;
-
-For_Each
-/ITERATION_PARAMETER_NAME=SIG_CUR
-/ITEMS=::MODIFIED_ANALOG_NAMES
-;
-
-!5)b.      Be able to use the average Peak EMG for normalization of EMG signal (all trials).
-Evaluate_Expression
- /EXPRESSION=DERIVED::RMS::&::SIG_CUR& / GLOBAL::METRIC::PROCESSED::&::SIG_CUR&_MVC_GLOBAL_PEAK_MAX
- ! /SIGNAL_TYPES=
- ! /SIGNAL_FOLDER=ORIGINAL
- ! /SIGNAL_NAMES=
- /RESULT_TYPES=DERIVED
- /RESULT_FOLDERS=NORM
- /RESULT_NAME=::SIG_CUR
- ! /APPLY_AS_SUFFIX_TO_SIGNAL_NAME=FALSE
-;
-
-End_For_Each
-/ITERATION_PARAMETER_NAME=SIG_CUR
-;
 
 ! ---------------------------------------------------------------------------------
 !  Metrics
