@@ -10,6 +10,8 @@ import neurokit2 as nk
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from pandas import DataFrame
+
 
 
 #df = pd.read_csv ('ACC1LA_70deg.csv',delimiter='comma', header=0, engine="python")
@@ -19,7 +21,6 @@ df = pd.read_csv ('C:/Users/Adam/Drive/Coding/GitRepos/Thesis_TAFT/Visual3d/Fing
 # the next step will be to integrate this data
 ##maybe I can just apply filtering through the Biomechanical toolkit
 
-print (df)
 
 Time = (df['Unnamed: 0'])
 S1_ACCX = df['Sensor 1 Acc.ACCX1']
@@ -40,7 +41,7 @@ print (df['Force.Fy3'])
 df['Sensor 1 Acc.ACCX1']
 """
 
-# Total Graph! 
+# FULL Graph! 
 x = (df['Unnamed: 0'])
 y1 = df['Sensor 1 Acc.ACCX1']
 y2 = df['Force.Fy3']
@@ -77,7 +78,7 @@ events
 """
 ### 11:11pm 12.23.2020
 
-'''
+"""
 ### EMG Event Detection
 emg = nk.emg_simulate(duration=10, burst_number=3)
 emg_cleaned = nk.emg_clean(emg)
@@ -86,24 +87,214 @@ emg_amplitude = nk.emg_amplitude(emg_cleaned)
 activity, info = nk.emg_activation(emg_amplitude=emg_amplitude, method="threshold")
 fig = nk.events_plot([info["EMG_Offsets"], info["EMG_Onsets"]], emg_cleaned)
 fig  
-'''
+"""""
 
-#detecting events from forceplate
+#detecting events from forceplate and plott
 emg_cleaned = nk.emg_clean(y2)
 emg_amplitude = nk.emg_amplitude(emg_cleaned)
-
 activity, info = nk.emg_activation(emg_amplitude=emg_amplitude, method="threshold", threshold=.5)
-fig = nk.events_plot([info["EMG_Offsets"], info["EMG_Onsets"]], emg_cleaned)
-fig
+
+# fig = nk.events_plot([info["EMG_Offsets"], info["EMG_Onsets"]], emg_cleaned)
+# fig
+
 
 onset_values = info.get('EMG_Onsets')
 offset_values = info.get('EMG_Offsets')
-# print(onset_values)
-# print (offset_values)
+print(onset_values)
+print (offset_values)
 
-(onset_values [1] + offset_values [1])
 
-a=7
-b=9
+your_list = onset_values
+Onset_Values = DataFrame(your_list,columns=['Onset Values'])
+your_list = onset_values
+Offset_Values = DataFrame(your_list,columns=['Offset Values'])
 
-d = np.dot(a, b, out=None)
+Onset_Values_Range = Onset_Values - 300 
+Offset_Values_Range = Offset_Values + 300 
+
+
+Time = (df['Unnamed: 0'])
+ACCX1 = df['Sensor 1 Acc.ACCX1']
+FP3 = df['Force.Fy3']
+
+Temo1 = Onset_Values_Range.iloc[1]['Onset Values']
+Temo2 = Offset_Values_Range.iloc[1]['Offset Values']
+
+
+
+### ============================
+### Index 1
+### ==============================
+
+Temo1 = Onset_Values_Range.iloc[0]['Onset Values']
+Temo2 = Offset_Values_Range.iloc[0]['Offset Values']
+
+GraphDFTime = Time.iloc[Temo1:Temo2]
+GraphDFACCX1 = ACCX1.iloc[Temo1:Temo2]
+GraphDFFP3 = FP3.iloc[Temo1:Temo2]
+
+
+fig, ax1 = plt.subplots()
+ax2 = ax1.twinx()
+ax2.plot(GraphDFTime, GraphDFFP3, 'g-', linestyle = "--")
+ax1.plot(GraphDFTime, GraphDFACCX1, 'r-')
+
+ax1.set_xlabel('Time')
+ax1.set_ylabel('Acceleration X', color='black')
+ax2.set_ylabel('FP3 Y Axis', color='black')
+
+
+plt.show ()
+
+
+### ============================
+### Index 2
+### ==============================
+
+Temo1 = Onset_Values_Range.iloc[1]['Onset Values']
+Temo2 = Offset_Values_Range.iloc[1]['Offset Values']
+
+GraphDFTime = Time.iloc[Temo1:Temo2]
+GraphDFACCX1 = ACCX1.iloc[Temo1:Temo2]
+GraphDFFP3 = FP3.iloc[Temo1:Temo2]
+
+
+fig, ax1 = plt.subplots()
+ax2 = ax1.twinx()
+ax2.plot(GraphDFTime, GraphDFFP3, 'g-', linestyle = "--")
+ax1.plot(GraphDFTime, GraphDFACCX1, 'r-')
+
+ax1.set_xlabel('Time')
+ax1.set_ylabel('Acceleration X', color='black')
+ax2.set_ylabel('FP3 Y Axis', color='black')
+
+
+plt.show ()
+
+
+### ============================
+### Index 3
+### ==============================
+
+Temo1 = Onset_Values_Range.iloc[2]['Onset Values']
+Temo2 = Offset_Values_Range.iloc[2]['Offset Values']
+
+GraphDFTime = Time.iloc[Temo1:Temo2]
+GraphDFACCX1 = ACCX1.iloc[Temo1:Temo2]
+GraphDFFP3 = FP3.iloc[Temo1:Temo2]
+
+
+fig, ax1 = plt.subplots()
+ax2 = ax1.twinx()
+ax2.plot(GraphDFTime, GraphDFFP3, 'g-', linestyle = "--")
+ax1.plot(GraphDFTime, GraphDFACCX1, 'r-')
+
+ax1.set_xlabel('Time')
+ax1.set_ylabel('Acceleration X', color='black')
+ax2.set_ylabel('FP3 Y Axis', color='black')
+
+
+plt.show ()
+
+
+### ============================
+### Index 4
+### ============================== 
+
+Temo1 = Onset_Values_Range.iloc[3]['Onset Values']
+Temo2 = Offset_Values_Range.iloc[3]['Offset Values']
+
+GraphDFTime = Time.iloc[Temo1:Temo2]
+GraphDFACCX1 = ACCX1.iloc[Temo1:Temo2]
+GraphDFFP3 = FP3.iloc[Temo1:Temo2]
+
+
+fig, ax1 = plt.subplots()
+ax2 = ax1.twinx()
+ax2.plot(GraphDFTime, GraphDFFP3, 'g-', linestyle = "--")
+ax1.plot(GraphDFTime, GraphDFACCX1, 'r-')
+
+ax1.set_xlabel('Time')
+ax1.set_ylabel('Acceleration X', color='black')
+ax2.set_ylabel('FP3 Y Axis', color='black')
+
+
+plt.show ()
+
+
+### ============================
+### Index 5
+### ==============================
+
+Temo1 = Onset_Values_Range.iloc[4]['Onset Values']
+Temo2 = Offset_Values_Range.iloc[4]['Offset Values']
+
+GraphDFTime = Time.iloc[Temo1:Temo2]
+GraphDFACCX1 = ACCX1.iloc[Temo1:Temo2]
+GraphDFFP3 = FP3.iloc[Temo1:Temo2]
+
+
+fig, ax1 = plt.subplots()
+ax2 = ax1.twinx()
+ax2.plot(GraphDFTime, GraphDFFP3, 'g-', linestyle = "--")
+ax1.plot(GraphDFTime, GraphDFACCX1, 'r-')
+
+ax1.set_xlabel('Time')
+ax1.set_ylabel('Acceleration X', color='black')
+ax2.set_ylabel('FP3 Y Axis', color='black')
+
+
+plt.show ()
+
+
+### ============================
+### Index 6
+### ==============================
+
+Temo1 = Onset_Values_Range.iloc[5]['Onset Values']
+Temo2 = Offset_Values_Range.iloc[5]['Offset Values']
+
+GraphDFTime = Time.iloc[Temo1:Temo2]
+GraphDFACCX1 = ACCX1.iloc[Temo1:Temo2]
+GraphDFFP3 = FP3.iloc[Temo1:Temo2]
+
+
+fig, ax1 = plt.subplots()
+ax2 = ax1.twinx()
+ax2.plot(GraphDFTime, GraphDFFP3, 'g-', linestyle = "--")
+ax1.plot(GraphDFTime, GraphDFACCX1, 'r-')
+
+ax1.set_xlabel('Time')
+ax1.set_ylabel('Acceleration X', color='black')
+ax2.set_ylabel('FP3 Y Axis', color='black')
+
+
+plt.show ()
+
+
+### ============================
+### Index 7
+### ==============================
+
+Temo1 = Onset_Values_Range.iloc[6]['Onset Values']
+Temo2 = Offset_Values_Range.iloc[6]['Offset Values']
+
+GraphDFTime = Time.iloc[Temo1:Temo2]
+GraphDFACCX1 = ACCX1.iloc[Temo1:Temo2]
+GraphDFFP3 = FP3.iloc[Temo1:Temo2]
+
+
+fig, ax1 = plt.subplots()
+ax2 = ax1.twinx()
+ax2.plot(GraphDFTime, GraphDFFP3, 'g-', linestyle = "--")
+ax1.plot(GraphDFTime, GraphDFACCX1, 'r-')
+
+ax1.set_xlabel('Time')
+ax1.set_ylabel('Acceleration X', color='black')
+ax2.set_ylabel('FP3 Y Axis', color='black')
+
+
+
+
+
+
