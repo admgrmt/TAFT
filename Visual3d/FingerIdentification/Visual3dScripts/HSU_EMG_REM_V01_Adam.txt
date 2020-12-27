@@ -1,0 +1,698 @@
+File_New
+
+;
+
+File_Open
+! /FILE_NAME=
+! /SUFFIX=
+! /SET_PROMPT=File_Open
+! /FILTER=
+;
+
+! Assign tag run to file that are running files (includes file for normalization)
+Assign_Tags_To_Files
+/MOTION_FILE_NAMES= *deg*
+! /QUERY=
+/TAGS= RUN
+;
+
+! Assign tag LOCO (locomotion) to files that are running files (includes file for normalization)
+Assign_Tags_To_Files
+/MOTION_FILE_NAMES= *deg*
+! /QUERY=
+/TAGS= LOCO
+;
+
+! Assign tag ALL (locomotion and MVC) to files that are being used for anaysis (includes file for normalization)
+Assign_Tags_To_Files
+/MOTION_FILE_NAMES= *LOCO*+*TA*+*SOL*+*VL*+BF*+*GM*
+! /QUERY=
+/TAGS= EMG
+;
+
+! ===========================================================================
+! Select running files to identify Foot strike and Toe off using Foot switch
+! ===========================================================================
+
+### Picks file that we will be working with based off of tags
+Select_Active_File
+/FILE_NAME=RUN
+;
+
+### makes footswitch events to work around: beginning of the trail _ not gait parameters just yet...
+Event_Explicit
+/EVENT_NAME=START_TRIAL
+! /FRAME=
+/TIME=2
+;
+
+### Generates events based off of timing - in this case they are looking for 20 seconds of a trial.
+Event_Explicit
+/EVENT_NAME=END_TRIAL
+! /FRAME=
+/TIME=20
+;
+
+### Takes signal from FS (found on ACCX9) X component
+### between time 2 and 20 (see above)
+#### what if we change signal component to Y?
+Event_Global_Minimum
+/RESULT_EVENT_NAME=FSR_XMin
+/SIGNAL_TYPES=ANALOG
+! /SIGNAL_FOLDER=ORIGINAL
+/SIGNAL_NAMES=Foot_switch: ACC X 9
+/SIGNAL_COMPONENTS=X
+! /FRAME_OFFSET=0
+! /TIME_OFFSET=
+/EVENT_SEQUENCE=START_TRIAL+END_TRIAL
+! /EXCLUDE_EVENTS=
+! /EVENT_SEQUENCE_INSTANCE=0
+! /EVENT_SUBSEQUENCE=
+! /SUBSEQUENCE_EXCLUDE_EVENTS=
+! /EVENT_SUBSEQUENCE_INSTANCE=0
+! /THRESHOLD=
+;
+
+### Takes signal from FS (found on ACCY9) X Component
+### between time 2 and 20 (see above)
+Event_Global_Minimum
+/RESULT_EVENT_NAME=FSR_YMin
+/SIGNAL_TYPES=ANALOG
+! /SIGNAL_FOLDER=ORIGINAL
+/SIGNAL_NAMES=Foot_switch: ACC Y 9
+/SIGNAL_COMPONENTS=X
+! /FRAME_OFFSET=0
+! /TIME_OFFSET=
+/EVENT_SEQUENCE=START_TRIAL+END_TRIAL
+! /EXCLUDE_EVENTS=
+! /EVENT_SEQUENCE_INSTANCE=0
+! /EVENT_SUBSEQUENCE=
+! /SUBSEQUENCE_EXCLUDE_EVENTS=
+! /EVENT_SUBSEQUENCE_INSTANCE=0
+! /THRESHOLD=
+;
+
+### Takes signal that we just created 
+### ! means to comment out, so those parts are being ignored
+### Creates a metric name in the results for FSR MIN X_Value
+### Creates and event named FSR XMIN
+Metric_Signal_Value_At_Event
+/SIGNAL_TYPES=ANALOG
+! /SIGNAL_FOLDER=ORIGINAL
+/SIGNAL_NAMES=Foot_switch: ACC X 9
+! /RESULT_METRIC_FOLDER=PROCESSED
+/RESULT_METRIC_NAME=FSR_MIN X_VALUE
+! /APPLY_AS_SUFFIX_TO_SIGNAL_NAME=FALSE
+! /SIGNAL_COMPONENTS=
+/COMPONENT_SEQUENCE=X
+/EVENT_NAME=FSR_XMin
+/GENERATE_MEAN_AND_STDDEV=FALSE
+! /APPEND_TO_EXISTING_VALUES=FALSE
+! /GENERATE_VECTOR_LENGTH_METRIC=FALSE
+! /RETAIN_NO_DATA_VALUES=FALSE
+;
+
+Metric_Signal_Value_At_Event
+/SIGNAL_TYPES=ANALOG
+! /SIGNAL_FOLDER=ORIGINAL
+/SIGNAL_NAMES=Foot_switch: ACC Y 9
+! /RESULT_METRIC_FOLDER=PROCESSED
+/RESULT_METRIC_NAME=FSR_MIN Y_VALUE
+! /APPLY_AS_SUFFIX_TO_SIGNAL_NAME=FALSE
+! /SIGNAL_COMPONENTS=
+/COMPONENT_SEQUENCE=X
+/EVENT_NAME=FSR_YMin
+/GENERATE_MEAN_AND_STDDEV=FALSE
+! /APPEND_TO_EXISTING_VALUES=FALSE
+! /GENERATE_VECTOR_LENGTH_METRIC=FALSE
+! /RETAIN_NO_DATA_VALUES=FALSE
+;
+
+
+### Subtracts the FSR_Min X Value from the ACC X value
+### Renames as FSR_X_Zeroed!
+
+Subtract_Constant_From_Signals
+/SIGNAL_TYPES=ANALOG
+! /SIGNAL_FOLDER=ORIGINAL
+/SIGNAL_NAMES=Foot_switch: ACC X 9
+/SIGNAL_COMPONENTS=X
+! /RESULT_TYPES=
+! /RESULT_FOLDERS=PROCESSED
+/RESULT_NAME=FSR_X_ZEROED
+/APPLY_AS_SUFFIX_TO_SIGNAL_NAME=FALSE
+/CONSTANT=METRIC::PROCESSED::FSR_MIN X_VALUE
+;
+
+Subtract_Constant_From_Signals
+/SIGNAL_TYPES=ANALOG
+! /SIGNAL_FOLDER=ORIGINAL
+/SIGNAL_NAMES=Foot_switch: ACC Y 9
+/SIGNAL_COMPONENTS=X
+! /RESULT_TYPES=
+! /RESULT_FOLDERS=PROCESSED
+/RESULT_NAME=FSR_Y_ZEROED
+/APPLY_AS_SUFFIX_TO_SIGNAL_NAME=FALSE
+/CONSTANT=METRIC::PROCESSED::FSR_MIN Y_VALUE
+;
+
+### Sets an event threshold fir RFS and LEFT Footstrike going up 
+### Threshold for here is set to 3...
+
+Event_Threshold
+/RESULT_EVENT_NAME=RIGHT FOOT STRIKE
+/SIGNAL_TYPES=DERIVED
+/SIGNAL_FOLDER=PROCESSED
+/SIGNAL_NAMES=FSR_Y_ZEROED
+/SIGNAL_COMPONENTS=X
+! /FRAME_OFFSET=0
+! /TIME_OFFSET=
+/EVENT_SEQUENCE=START_TRIAL+END_TRIAL
+! /EXCLUDE_EVENTS=
+! /EVENT_SEQUENCE_INSTANCE=0
+! /EVENT_SUBSEQUENCE=
+! /SUBSEQUENCE_EXCLUDE_EVENTS=
+! /EVENT_SUBSEQUENCE_INSTANCE=0
+! /EVENT_INSTANCE=0
+/THRESHOLD=3
+/ON_ASCENT=TRUE
+/ON_DESCENT=FALSE
+/FRAME_WINDOW=2
+! /ENSURE_FRAMES_BEFORE=FALSE
+! /ENSURE_FRAMES_AFTER=FALSE
+;
+
+Event_Threshold
+/RESULT_EVENT_NAME=RIGHT FOOT OFF
+/SIGNAL_TYPES=DERIVED
+/SIGNAL_FOLDER=PROCESSED
+/SIGNAL_NAMES=FSR_X_ZEROED
+/SIGNAL_COMPONENTS=X
+! /FRAME_OFFSET=0
+! /TIME_OFFSET=
+/EVENT_SEQUENCE=START_TRIAL+END_TRIAL
+! /EXCLUDE_EVENTS=
+! /EVENT_SEQUENCE_INSTANCE=0
+! /EVENT_SUBSEQUENCE=
+! /SUBSEQUENCE_EXCLUDE_EVENTS=
+! /EVENT_SUBSEQUENCE_INSTANCE=0
+! /EVENT_INSTANCE=0
+/THRESHOLD=5
+/ON_ASCENT=FALSE
+/ON_DESCENT=TRUE
+! /FRAME_WINDOW=8
+! /ENSURE_FRAMES_BEFORE=FALSE
+! /ENSURE_FRAMES_AFTER=FALSE
+;
+
+! ---------------------------------------------------------------------------------
+!  Select files to define first 10 strides of all running trials
+! ---------------------------------------------------------------------------------
+
+Select_Active_File
+/FILE_NAME=LOCO
+;
+
+### Setting beginning frame at 1
+Event_Explicit
+/EVENT_NAME=START
+/FRAME=1
+! /TIME=
+;
+
+### Creates a name for right foot strike
+### Makes a New event name for the 11th instance of Right Foot strike
+### Names it 10 and generates 10 frames off of 
+Event_Copy
+/EVENT_NAME=RIGHT FOOT STRIKE
+/NEW_EVENT_NAME=END
+/EVENT_INSTANCE=11
+! /RANGE_INSTANCE=0
+! /EVENT_SEQUENCE=
+! /EXCLUDE_EVENTS=
+! /START_AT_EVENT=
+! /END_AT_EVENT=
+/FRAME_OFFSET=10
+! /TIME_OFFSET=
+! /PERCENT_OFFSET=
+;
+
+### Makes a copied event for HS _ Right foot strike
+Event_Copy
+/EVENT_NAME=RIGHT FOOT STRIKE
+/NEW_EVENT_NAME=RHS
+! /EVENT_INSTANCE=0
+! /RANGE_INSTANCE=0
+/EVENT_SEQUENCE=START+END
+! /EXCLUDE_EVENTS=
+! /START_AT_EVENT=
+! /END_AT_EVENT=
+/FRAME_OFFSET=0
+! /TIME_OFFSET=
+! /PERCENT_OFFSET=
+;
+
+### Makes a copied even for right toe off based off fo Right foot off
+### Within the sequence of start and end
+Event_Copy
+/EVENT_NAME=RIGHT FOOT OFF
+/NEW_EVENT_NAME=RTO
+! /EVENT_INSTANCE=0
+! /RANGE_INSTANCE=0
+/EVENT_SEQUENCE=START+END
+! /EXCLUDE_EVENTS=
+! /START_AT_EVENT=
+! /END_AT_EVENT=
+/FRAME_OFFSET=0
+! /TIME_OFFSET=
+! /PERCENT_OFFSET=
+;
+
+! ------------------------------------------------------------------------------------------------------------
+!  Define Event Sequences to represent 10% intervals, each gait cycle
+! ------------------------------------------------------------------------------------------------------------
+
+### Defines one gait cycle as two steps "RHS + RHS"S
+Event_Define_Event_Sequence
+/EVENT_SEQUENCE_NAME=RCYCLE
+/EVENT_SEQUENCE=RHS+RHS
+! /EXCLUDE_EVENTS=
+! /INSIDE_OF_SEQUENCE=
+! /OFFSET_FROM_START=
+! /OFFSET_FROM_END=
+! /OFFSET_BY=PERCENT
+/EVENT_SEQUENCE_INSTANCE=0
+;
+
+! ------------------------------------------------------------------------------
+!  Define Event Sequences for time in stance
+! ------------------------------------------------------------------------------
+
+### defines stance between RHS and RTO (defined earlier)
+Event_Define_Event_Sequence
+/EVENT_SEQUENCE_NAME=RSTANCE
+/EVENT_SEQUENCE=RHS+RTO
+! /EXCLUDE_EVENTS=
+! /INSIDE_OF_SEQUENCE=
+! /OFFSET_FROM_START=
+! /OFFSET_FROM_END=
+! /OFFSET_BY=PERCENT
+/EVENT_SEQUENCE_INSTANCE=0
+;
+
+! ------------------------------------------------------------------------------
+!  Define Event Sequences for time in swing
+! ------------------------------------------------------------------------------
+
+### defines stance between RHS and RTO
+Event_Define_Event_Sequence
+/EVENT_SEQUENCE_NAME=RSWING
+/EVENT_SEQUENCE=RTO+RHS
+! /EXCLUDE_EVENTS=
+! /INSIDE_OF_SEQUENCE=
+! /OFFSET_FROM_START=
+! /OFFSET_FROM_END=
+! /OFFSET_BY=PERCENT
+/EVENT_SEQUENCE_INSTANCE=0
+;
+
+
+! ------------------------------------------------------------------------------
+!  Applies a for each to the code _ makes sequence timing
+! ------------------------------------------------------------------------------
+
+For_Each
+/ITERATION_PARAMETER_NAME=NUM_ZERO_BASED
+/ITERATION_PARAMETER_COUNT_NAME=NUM_ONE_BASED
+/ITEMS=0+1+2+3+4+5+6+7+8+9
+;
+
+### splits cycle into percentages
+Set_Pipeline_Parameter_From_Expression
+ ! Start interval will be 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100
+ /PARAMETER_NAME=OFFSET1
+ /EXPRESSION=( &::NUM_ZERO_BASED& * 10 )
+ ! /AS_INTEGER=TRUE
+;
+
+Set_Pipeline_Parameter_From_Expression
+ ! End interval will be 9, 19, 29, 39, etc.
+ ! So the offset from the end will be:
+ !  91, 81, 71, 61, etc.
+ /PARAMETER_NAME=OFFSET2
+ /EXPRESSION= ( 100 - ( &::NUM_ONE_BASED& * 10 ) ) + 1
+ ! /AS_INTEGER=TRUE
+;
+
+Event_Define_Event_Sequence
+ /EVENT_SEQUENCE_NAME=RCYCLE_&::NUM_ONE_BASED&0
+ /EVENT_SEQUENCE=RHS+RHS
+ ! /EXCLUDE_EVENTS=
+ ! /INSIDE_OF_SEQUENCE=
+ /OFFSET_FROM_START=&::OFFSET1&
+ /OFFSET_FROM_END=-&::OFFSET2&
+ ! /OFFSET_BY=PERCENT
+ /EVENT_SEQUENCE_INSTANCE=0
+;
+
+End_For_Each
+/ITERATION_PARAMETER_NAME=NUM_ZERO_BASED
+;
+
+! =================================================================================
+! Rename the running trial signal names so that the will be the same in all resulting commands
+! =================================================================================
+
+Select_Active_File
+/FILE_NAME=RUN
+;
+
+### Selects running files
+### Copies original Analog signal folder folder to not break anything
+#### Copied to EMG Original
+
+Copy_Folder
+/SIGNAL_TYPES=ANALOG
+/EXISTING_FOLDER=ORIGINAL
+/NEW_FOLDER_NAME=EMG ORIGINAL
+! /OVERWRITE_EXISTING_SIGNALS=FALSE
+;
+
+### Removes signals from code _ ACC Channels that were not needed; ACC from EMG files.
+### This folder purely becomes an EMG signals folder
+Remove_Signals
+/SIGNAL_TYPES=ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG+ANALOG
+/SIGNAL_FOLDER=EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL+EMG ORIGINAL
+/SIGNAL_NAMES=BF: ACC X 6+BF: ACC Y 6+BF: ACC Z 6+Foot_switch: ACC X 9+Foot_switch: ACC Y 9+Foot_switch: ACC Z 9+GM: ACC X 8+GM: ACC Y 8+GM: ACC Z 8+LG: ACC X 3+LG: ACC Y 3+LG: ACC Z 3+RF: ACC X 5+RF: ACC Y 5+RF: ACC Z 5+SEM: ACC X 7+SEM: ACC Y 7+SEM: ACC Z 7+SOL: ACC X 2+SOL: ACC Y 2+SOL: ACC Z 2+TA: ACC X 1+TA: ACC Y 1+TA: ACC Z 1+VL: ACC X 4+VL: ACC Y 4+VL: ACC Z 4
+! /INCLUDE_MODELS=FALSE
+;
+
+! =========================================================================
+! 
+! ========================================================================
+
+Select_Active_File
+/FILE_NAME=EMG
+;
+
+### makes a list of parameter names from EMG_Original folder (now cleaned)
+Set_Pipeline_Parameter_To_List_Of_Signal_Names
+/PARAMETER_NAME=SIGNAL_LIST_ORIGINAL
+/SIGNAL_TYPES=ANALOG
+/SIGNAL_FOLDER=EMG ORIGINAL
+;
+
+### Code to modify names but nothing seems to have been modified in SIGNAL_LIST_ORIGNAL parameter (see last command)
+Set_Pipeline_Parameter
+/PARAMETER_NAME=MODIFIED_ANALOG_NAMES
+/PARAMETER_VALUE=::SIGNAL_LIST_ORIGINAL
+/PARAMETER_VALUE_SEARCH_FOR=
+/PARAMETER_VALUE_REPLACE_WITH=
+! /PARAMETER_VALUE_PREFIX=
+! /PARAMETER_VALUE_APPEND=
+! /MULTI_PASS=FALSE
+;
+
+Delete_Folder
+/SIGNAL_TYPE=DERIVED
+/FOLDER=ANALOG_ORIG
+;
+
+### Multiple EMG Original by derived, and form a new ANALOG_ORIG
+### Seems like it eliminated all of the signals that we did not want earlier.
+### We went through the trouble of removing, so now we "redo" the derived folder.
+
+Multiply_Signals_By_Constant
+/SIGNAL_TYPES=ANALOG
+/SIGNAL_FOLDER=EMG ORIGINAL
+! /SIGNAL_NAMES=::ORIGINAL_ANALOG_NAMES
+! /SIGNAL_COMPONENTS=
+/RESULT_TYPES=DERIVED
+/RESULT_FOLDERS=ANALOG_ORIG
+! /RESULT_NAME=
+! /APPLY_AS_SUFFIX_TO_SIGNAL_NAME=
+/CONSTANT=1
+;
+
+### Renames original analog names to modified analog names -> for posterity?... 
+Rename_Signals
+! /FILE_NAME=
+/SIGNAL_TYPES=DERIVED
+/SIGNAL_FOLDER=ANALOG_ORIG
+/SIGNAL_NAMES=::ORIGINAL_ANALOG_NAMES
+/NEW_SIGNAL_NAME=::MODIFIED_ANALOG_NAMES
+! /APPEND_TO_OLD_SIGNAL_NAME=FALSE
+! /INCLUDE_CALFILE=FALSE
+;
+
+! =================================================================================
+!  Process the analog signals
+! =================================================================================
+
+Select_Active_File
+/FILE_NAME=EMG
+;
+
+!Subtracts Mean of Signal from Signal to correct DC offset
+ !1)      Calculate Metric Mean of each EMG channel (in analog folder).
+Metric_Mean
+ /RESULT_METRIC_FOLDER=DCOFFSET
+ /RESULT_METRIC_NAME=_ave
+ /APPLY_AS_SUFFIX_TO_SIGNAL_NAME=TRUE
+ /SIGNAL_TYPES=DERIVED
+ /SIGNAL_FOLDER=ANALOG_ORIG
+ /SIGNAL_NAMES=::MODIFIED_ANALOG_NAMES
+ /SIGNAL_COMPONENTS=
+ /COMPONENT_SEQUENCE=X
+ /EVENT_SEQUENCE=
+ /EXCLUDE_EVENTS=
+ /SEQUENCE_PERCENT_START=
+ /SEQUENCE_PERCENT_END=
+ /GENERATE_MEAN_AND_STDDEV=FALSE
+ ! /APPEND_TO_EXISTING_VALUES=FALSE
+;
+
+! ---------------------------------------------------------------------------------
+!  Take Means of Signals of all trials as first step to correct DC offset
+! ---------------------------------------------------------------------------------
+
+For_Each
+/ITERATION_PARAMETER_NAME=SIG_CUR
+/ITEMS=::MODIFIED_ANALOG_NAMES
+;
+
+! 2)      Subtract Mean from each channel (DC offset) so signals all fluctuate about 0 Volts.
+Subtract_Signals
+   /SIGNAL_TYPES=DERIVED+METRIC
+   /SIGNAL_FOLDER=ANALOG_ORIG+DCOFFSET
+   /SIGNAL_NAMES=&::SIG_CUR& + &::SIG_CUR&_ave
+   ! /COMPONENT_SEQUENCE=
+   /RESULT_FOLDER=DCOFFSET
+   /RESULT_NAME=&::SIG_CUR&
+;
+
+End_For_Each
+/ITERATION_PARAMETER_NAME=SIG_CUR
+;
+
+! 4-Option 2)       High Pass filter (20 Hz)
+Highpass_Filter
+/SIGNAL_TYPES=DERIVED
+/SIGNAL_FOLDER=RECTIFIED
+/SIGNAL_NAMES=::MODIFIED_ANALOG_NAMES
+/RESULT_FOLDER=HIGHPASS
+! /RESULT_SUFFIX=
+! /FILTER_CLASS=BUTTERWORTH
+/FREQUENCY_CUTOFF=20
+! /NUM_REFLECTED=6
+! /NUM_EXTRAPOLATED=0
+! /TOTAL_BUFFER_SIZE=6
+! /NUM_BIDIRECTIONAL_PASSES=1
+;
+
+! 4-Option 2)       Low Pass filter (500 Hz) each rectified EMG signal (so I can compare to RMS method to see which I want to use)
+Lowpass_Filter
+ /SIGNAL_TYPES=DERIVED
+ /SIGNAL_FOLDER=HIGHPASS
+ /SIGNAL_NAMES=::MODIFIED_ANALOG_NAMES
+ /RESULT_FOLDER=LOWPASS
+ ! /RESULT_SUFFIX=
+ ! /FILTER_CLASS=BUTTERWORTH
+ /FREQUENCY_CUTOFF=350
+ ! /NUM_REFLECTED=6
+ ! /NUM_EXTRAPOLATED=0
+ ! /TOTAL_BUFFER_SIZE=6
+ ! /NUM_BIDIRECTIONAL_PASSES=1
+;
+
+! ---------------------------------------------------------------------------------
+!  Rectify, Bandpass, RMS
+! ---------------------------------------------------------------------------------
+
+! 3)      Rectify each  filtered_DC_offset EMG signal
+Rectify
+ /SIGNAL_TYPES=DERIVED
+ /SIGNAL_FOLDER=DCOFFSET
+ /SIGNAL_NAMES=::MODIFIED_ANALOG_NAMES
+ ! /RESULT_TYPES=
+ /RESULT_FOLDER=RECTIFIED
+ ! /RESULT_NAMES=
+ ! /RESULT_SUFFIX=
+;
+
+! 4-Option 1)       Calculate RMS (40 ms window) EMG for each rectified EMG signal
+Moving_RMS
+/SIGNAL_TYPES=DERIVED
+/SIGNAL_FOLDER=LOWPASS
+/SIGNAL_NAMES=::MODIFIED_ANALOG_NAMES
+! /RESULT_TYPES=
+/RESULT_FOLDERS=RMS
+! /RESULT_NAME=
+/APPLY_AS_SUFFIX_TO_SIGNAL_NAME=TRUE
+/NUM_WINDOW_FRAMES=1001
+;
+
+Lowpass_Filter
+/SIGNAL_TYPES=DERIVED
+/SIGNAL_FOLDER=RMS
+! /SIGNAL_NAMES=
+/RESULT_FOLDER=LOW_LOW
+/RESULT_SUFFIX=_LOW_LOW
+! /FILTER_CLASS=BUTTERWORTH
+/FREQUENCY_CUTOFF=3
+! /NUM_REFLECTED=6
+! /NUM_EXTRAPOLATED=0
+! /TOTAL_BUFFER_SIZE=6
+! /NUM_BIDIRECTIONAL_PASSES=1
+;
+
+
+! ---------------------------------------------------------------------------------
+!  Metrics
+! ---------------------------------------------------------------------------------
+
+Metric_Mean
+/RESULT_METRIC_FOLDER=MEAN_RCYCLE
+/RESULT_METRIC_NAME=
+/APPLY_AS_SUFFIX_TO_SIGNAL_NAME=TRUE
+/SIGNAL_TYPES=DERIVED
+/SIGNAL_FOLDER=NORM
+/SIGNAL_NAMES=::MODIFIED_ANALOG_NAMES
+/COMPONENT_SEQUENCE=X
+/EVENT_SEQUENCE=RCYCLE
+/EXCLUDE_EVENTS=
+/SEQUENCE_PERCENT_START=
+/SEQUENCE_PERCENT_END=
+! /GENERATE_MEAN_AND_STDDEV=TRUE
+! /APPEND_TO_EXISTING_VALUES=FALSE
+;
+
+Metric_Mean
+/RESULT_METRIC_FOLDER=MEAN_RSTANCE
+/RESULT_METRIC_NAME=
+/APPLY_AS_SUFFIX_TO_SIGNAL_NAME=TRUE
+/SIGNAL_TYPES=DERIVED
+/SIGNAL_FOLDER=NORM
+/SIGNAL_NAMES=::MODIFIED_ANALOG_NAMES
+/COMPONENT_SEQUENCE=X
+/EVENT_SEQUENCE=RSTANCE
+/EXCLUDE_EVENTS=
+/SEQUENCE_PERCENT_START=
+/SEQUENCE_PERCENT_END=
+! /GENERATE_MEAN_AND_STDDEV=TRUE
+! /APPEND_TO_EXISTING_VALUES=FALSE
+;
+
+Metric_Mean
+/RESULT_METRIC_FOLDER=MEAN_RSWING
+/RESULT_METRIC_NAME=
+/APPLY_AS_SUFFIX_TO_SIGNAL_NAME=TRUE
+/SIGNAL_TYPES=DERIVED
+/SIGNAL_FOLDER=NORM
+/SIGNAL_NAMES=::MODIFIED_ANALOG_NAMES
+/COMPONENT_SEQUENCE=X
+/EVENT_SEQUENCE=RSWING
+/EXCLUDE_EVENTS=
+/SEQUENCE_PERCENT_START=
+/SEQUENCE_PERCENT_END=
+! /GENERATE_MEAN_AND_STDDEV=TRUE
+! /APPEND_TO_EXISTING_VALUES=FALSE
+;
+
+For_Each
+/ITERATION_PARAMETER_NAME=NUM
+! /ITERATION_PARAMETER_COUNT_NAME=
+/ITEMS=1+2+3+4+5+6+7+8+9+10
+;
+
+Metric_Mean
+ /RESULT_METRIC_FOLDER=MEAN_RCYCLE_&::NUM&0
+ /RESULT_METRIC_NAME=
+ /APPLY_AS_SUFFIX_TO_SIGNAL_NAME=TRUE
+ /SIGNAL_TYPES=DERIVED
+ /SIGNAL_FOLDER=NORM
+ /SIGNAL_NAMES=::MODIFIED_ANALOG_NAMES
+ /COMPONENT_SEQUENCE=X
+ /EVENT_SEQUENCE=RCYCLE_&::NUM&0
+ /EXCLUDE_EVENTS=
+ /SEQUENCE_PERCENT_START=
+ /SEQUENCE_PERCENT_END=
+ ! /GENERATE_MEAN_AND_STDDEV=TRUE
+ ! /APPEND_TO_EXISTING_VALUES=FALSE
+;
+
+End_For_Each
+/ITERATION_PARAMETER_NAME=NUM
+;
+
+Select_Active_File
+/FILE_NAME=LOCO
+;
+
+Metric_Compute_Temporal_Distance
+! /GLOBAL_RESULT_METRIC_FOLDER=TEMPORAL_DISTANCE
+/CALCULATE_PER_FILE=TRUE
+! /CALCULATE_PER_ALL_CMO_GLOBALS=FALSE
+! /CREATE_ALL_INSTANCES=FALSE
+! /RIGHT_FOOT_LOCATION=KINETIC_KINEMATIC::RFT::ProxEndPos
+! /LEFT_FOOT_LOCATION=KINETIC_KINEMATIC::LFT::ProxEndPos
+! /HEIGHT=METRIC::PROCESSED::HEIGHT
+/RHS_EVENT=RHS
+/LHS_EVENT=LHS
+/RTO_EVENT=RTO
+/LTO_EVENT=LTO
+! /STRICT_EVENT_SEQUENCE_VALIDATION=FALSE
+! /INCLUDE_EVENTS=
+! /EXCLUDE_EVENTS=
+! /EVENT_INSTANCE=0
+/COMPUTE_SPEED=FALSE
+/COMPUTE_STATURES_PER_SECOND=FALSE
+/COMPUTE_STRIDE_WIDTH=FALSE
+/COMPUTE_STRIDE_LENGTH=FALSE
+! /COMPUTE_CYCLE_TIME=TRUE
+/COMPUTE_STEP_LENGTH=FALSE
+/COMPUTE_STEP_TIME=FALSE
+! /COMPUTE_STANCE_TIME=TRUE
+! /COMPUTE_SWING_TIME=TRUE
+! /COMPUTE_STEPS_PER_MINUTE=TRUE
+/COMPUTE_STRIDES_PER_MINUTE=FALSE
+/COMPUTE_DOUBLE_LIMB_SUPPORT_TIME=FALSE
+/COMPUTE_RIGHT_INITIAL_DOUBLE_LIMB_SUPPORT_TIME=FALSE
+/COMPUTE_RIGHT_TERMINAL_DOUBLE_LIMB_SUPPORT_TIME=FALSE
+! /TREADMILL_SPEED=
+! /LEFT_TREADMILL_SPEED=
+! /TREADMILL_DIRECTION=
+;
+
+Metric_Explicit
+/RESULT_METRIC_FOLDER=TEMPORAL_DISTANCE
+/RESULT_METRIC_NAME=STRIDE_FREQUENCY
+/METRIC_VALUE=1/(METRIC::TEMPORAL_DISTANCE::Right_Cycle_Time_Mean)
+;
+
+File_Save_As
+! /FILE_NAME=
+! /SET_PROMPT=Save CMO file as
+! /SAVE_EMBEDDED_GRAPHICS=FALSE
+;
+
