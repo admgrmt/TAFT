@@ -28,10 +28,11 @@ df2 = df.iloc[0:29077, 1:25]
 #### attempting to make new column of data for integration of each signal
 
 #inserts a blank data frame for the integrated values
-df2.insert(24, "Sensor 1 Acc.AccX1 Constant", 0)
+df2.insert(24, "Sensor 1 Acc.ACCX1 Constant", 0)
 df2.insert(25, "Sensor 1 Acc.ACCX1 Velocity", 0)
+df2.insert(26, "Sensor 1 Acc.ACCX1 Position", 0)
 
-df2["Sensor 1 Acc.ACCX1 Constant"] = df2["Sensor 1 Acc.ACCX1"].subtract(8.53)
+df2["Sensor 1 Acc.ACCX1 Constant"] = df2["Sensor 1 Acc.ACCX1"].subtract(df2.iloc[0]['Sensor 1 Acc.ACCX1'])
 
 # creates a function to integrate a column of values on a 1 m/s change  
 # this particular function was to integrate acceleration into "average velocity" on 1 m/s interval    
@@ -47,11 +48,33 @@ def avg_integrate_values (value):
         #print(change_output)
     return change_output
 
-avg_integrate_values(29076)    
+avg_integrate_values(29076) 
 
-#print(avg_integrate_values(11))
+df2["Sensor 1 Acc.ACCX1 Velocity"] = df2["Sensor 1 Acc.ACCX1 Velocity"].subtract(df2.iloc[0]['Sensor 1 Acc.ACCX1 Velocity'])
 
 
+###=====================================
+### going to try and integrate velocity data to positional data
+###=====================================
+
+# manipulating earlier function to apply velocity values for the change - making new function
+def avg_integrate_vel_values (value):
+    fin_value = 1
+    init_value= 0
+    change_output = 0
+    while fin_value <= value:
+        change_output = ((((df2.loc[fin_value]['Sensor 1 Acc.ACCX1 Velocity'] + df2.loc[init_value]['Sensor 1 Acc.ACCX1 Velocity'])/2)*1) + change_output)
+        df2.loc[fin_value,'Sensor 1 Acc.ACCX1 Position'] = change_output
+        fin_value = fin_value + 1
+        init_value = init_value + 1
+        #print(change_output)
+    return change_output
+
+avg_integrate_vel_values(29076)
+
+df2["Sensor 1 Acc.ACCX1 Position"] = df2["Sensor 1 Acc.ACCX1 Position"].subtract(df2.iloc[0]['Sensor 1 Acc.ACCX1 Position'])
+
+#===================================================
 Time = (df['Unnamed: 0'])
 S1_ACCX = df['Sensor 1 Acc.ACCX1']
 FP3Y = df['Force.Fy3']
@@ -142,6 +165,126 @@ Offset_Values = DataFrame(your_list,columns=['Offset Values'])
 Onset_Values_Range = Onset_Values - 300 
 Offset_Values_Range = Offset_Values + 300 
 
+
+### ===========================
+### Test graph for acceleration function
+### ===========================
+
+Time = df['Unnamed: 0']
+ACCX1 = df2['Sensor 1 Acc.ACCX1']
+FP3 = df['Force.Fy3']
+
+print(ACCX1)
+
+Temo1 = Onset_Values_Range.iloc[0]['Onset Values']
+Temo2 = Offset_Values_Range.iloc[0]['Offset Values']
+
+GraphDFTime = Time.iloc[Temo1:Temo2]
+GraphDFACCX1 = ACCX1.iloc[Temo1:Temo2]
+GraphDFFP3 = FP3.iloc[Temo1:Temo2]
+
+
+fig, ax1 = plt.subplots()
+ax2 = ax1.twinx()
+ax2.plot(GraphDFTime, GraphDFFP3, 'g-', linestyle = "--")
+ax1.plot(GraphDFTime, GraphDFACCX1, 'r-')
+
+ax1.set_xlabel('Time')
+ax1.set_ylabel('Acceleration X', color='black')
+ax2.set_ylabel('FP3 Y Axis', color='black')
+
+
+plt.show ()
+
+
+### ==========================
+### Test graph for velocity
+### ==========================
+
+
+Time = df['Unnamed: 0']
+ACCX1 = df2['Sensor 1 Acc.ACCX1 Velocity']
+FP3 = df['Force.Fy3']
+
+print(ACCX1)
+
+Temo1 = Onset_Values_Range.iloc[0]['Onset Values']
+Temo2 = Offset_Values_Range.iloc[0]['Offset Values']
+
+GraphDFTime = Time.iloc[Temo1:Temo2]
+GraphDFACCX1 = ACCX1.iloc[Temo1:Temo2]
+GraphDFFP3 = FP3.iloc[Temo1:Temo2]
+
+
+fig, ax1 = plt.subplots()
+ax2 = ax1.twinx()
+ax2.plot(GraphDFTime, GraphDFFP3, 'g-', linestyle = "--")
+ax1.plot(GraphDFTime, GraphDFACCX1, 'r-')
+
+ax1.set_xlabel('Time')
+ax1.set_ylabel('Acceleration X', color='black')
+ax2.set_ylabel('FP3 Y Axis', color='black')
+
+
+plt.show ()
+
+### ===========================
+### Test graph for position function
+### ===========================
+
+Time = df['Unnamed: 0']
+ACCX1 = df2['Sensor 1 Acc.ACCX1 Position']
+FP3 = df['Force.Fy3']
+
+print(ACCX1)
+
+Temo1 = Onset_Values_Range.iloc[0]['Onset Values']
+Temo2 = Offset_Values_Range.iloc[0]['Offset Values']
+
+GraphDFTime = Time.iloc[Temo1:Temo2]
+GraphDFACCX1 = ACCX1.iloc[Temo1:Temo2]
+GraphDFFP3 = FP3.iloc[Temo1:Temo2]
+
+
+fig, ax1 = plt.subplots()
+ax2 = ax1.twinx()
+ax2.plot(GraphDFTime, GraphDFFP3, 'g-', linestyle = "--")
+ax1.plot(GraphDFTime, GraphDFACCX1, 'r-')
+
+ax1.set_xlabel('Time')
+ax1.set_ylabel('Acceleration X', color='black')
+ax2.set_ylabel('FP3 Y Axis', color='black')
+
+
+plt.show ()
+
+### ============================
+### Index 1
+### ==============================
+
+Temo1 = Onset_Values_Range.iloc[0]['Onset Values']
+Temo2 = Offset_Values_Range.iloc[0]['Offset Values']
+
+GraphDFTime = Time.iloc[Temo1:Temo2]
+GraphDFACCX1 = ACCX1.iloc[Temo1:Temo2]
+GraphDFFP3 = FP3.iloc[Temo1:Temo2]
+
+
+fig, ax1 = plt.subplots()
+ax2 = ax1.twinx()
+ax2.plot(GraphDFTime, GraphDFFP3, 'g-', linestyle = "--")
+ax1.plot(GraphDFTime, GraphDFACCX1, 'r-')
+
+ax1.set_xlabel('Time')
+ax1.set_ylabel('Acceleration X', color='black')
+ax2.set_ylabel('FP3 Y Axis', color='black')
+
+
+plt.show ()
+
+###========================
+### Beginning original graph index for all 7 repetitions
+### =======================
 
 Time = df['Unnamed: 0']
 ACCX1 = df2['Sensor 1 Acc.ACCX1 Velocity']
