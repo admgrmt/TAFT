@@ -22,7 +22,7 @@ import numpy as np
 #df = pd.read_csv ('G:/My Drive/AllExportedVelocityIntegration.txt', engine='python', delimiter='\t', header=1, skiprows=[2,3,4])
 
 #ammended import for needs
-df = pd.read_csv ('G:/My Drive/AllExportedVelocityIntegration.txt', engine='python', delimiter='\t', skiprows=[1,2,3,4], header=0)
+df = pd.read_csv ('G:/My Drive/Coding/GitRepos/Thesis_TAFT/MoreScripts/AllExportedVelocityIntegration.txt', engine='python', delimiter='\t', skiprows=[1,2,3,4], header=0)
 
 ## level time to the frequency of collection (in this case. 148.148)
 
@@ -33,8 +33,6 @@ df['Unnamed: 0'] = df['Unnamed: 0']
 df=df.rename(columns = {'Unnamed: 0':'Time'})
 
 ##Rename dataframe unnnamed to time
-
-df
 
 import os
 import os.path
@@ -55,18 +53,19 @@ file_list = os.listdir("G:/My Drive/Adam_G_Thesis/4_Data/Pilot/Raw_data/Raw_EMG_
 # print('Updated animals list: ', animals)
 #=============================================
 
-print(file_list)
+# print(file_list) CHECK
 
 file_list.remove('desktop.ini')
 file_list.remove('TAFT_P5_180_5_x_30_sec_Rep_6.15_148_1481Hz.c3d')
 file_list.remove('TAFT_P5_180_5_x_30_sec_Rep_5.14_148_1481Hz.c3d')
 
+print("these are the files that I will run the plotting through")
 print(file_list)
 
 for names in file_list:
         df.plot(x = "Time", y = names, kind = 'scatter', s=2.00)
         plt.show()	
-        print(names)
+        # print(names) CHECK
 
 #====================================================================
 ## make line of best fit for one datapoint or something
@@ -80,7 +79,10 @@ for names in file_list:
 # plt.plot(x, m*x + b)
 #====================================================================
 
-rep_name='TAFT_P5_6x4_5_x_30_sec_Rep_5.9_148_1481Hz.c3d'
+rep_name=
+#  'TAFT_P5_180_5_x_30_sec_Rep_4.13_148_1481Hz.c3d'
+#  'TAFT_P5_3x4_5_x_30_sec_Rep_5.4_148_1481Hz.c3d'
+#  'TAFT_P5_180_5_x_30_sec_Rep_4.13_148_1481Hz.c3d'
 
 x = np.array(df.iloc[:]['Time'])
 y = np.array(df.iloc[:][rep_name])
@@ -88,8 +90,9 @@ m, b = np.polyfit(x, y, 1)
 print(m)
 print(b)
 
-plt.plot(x, y, 'o')
-plt.plot(x, m*x + b)
+#hiding plot for now because it is fat and ugly
+# plt.plot(x, y, 'o')
+# plt.plot(x, m*x + b)
 
 #complete
 #================
@@ -128,3 +131,12 @@ plt.show()
 
 
 # Best fit line complete
+
+## not to just subtract points from best line fit, replace the data, and take me back to zero.
+d['Zerod']= df[rep_name] - d['Slope_Points'] 
+
+d.plot(x = 'Time', y = 'Zerod', kind = 'scatter', s=1.00) 
+plt.axhline(y=0, color="black", linestyle="--")
+plt.axhline(y=.2, color="red", linestyle="--")
+plt.axhline(y=-.2, color="red", linestyle="--")
+plt.show
