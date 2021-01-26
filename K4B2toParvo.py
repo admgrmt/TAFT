@@ -1,13 +1,20 @@
 # -*- coding: utf-8 -*-
 """
 @author: Adam
+Written 1/26/2021
+
+For use with K4B2 data export and "New_Metabolic_Analysis"
+
+Made to convert K4B2 xlsx file to a importable "parvo formatted" xls sheet.
+Automating copy and paste...
 """
 
 import pandas as pd 
 from tkinter import filedialog as fd 
+import numpy as np
 
 #ask for path and places that in name variable
-#imports in the K4b2 File (currently named Test1_RawDataExport)
+#imports in the K4b2 File (user will need to read in appropriate file)
 path=fd.askopenfilename() 
 df_original = pd.read_excel(path)
 
@@ -101,9 +108,22 @@ New_MATLAB['Unnamed: 5'][29:temp_count_MAT] = original_list
 original_list = df_original['R'][2:].values.tolist()
 New_MATLAB['Unnamed: 6'][29:temp_count_MAT] = original_list
 
+###
+tempdf = pd.DataFrame([[np.NaN] * len(New_MATLAB.columns)], columns=New_MATLAB.columns)
+New_MATLAB = tempdf.append(New_MATLAB, ignore_index=True)
+New_MATLAB.iloc[0][0] = 'Humboldt State University'
+
 #===============================================
 ## Finished import up to RR....
+#### filling in with zeros for now.
 
+New_MATLAB["Unnamed: 7"][29:temp_count_MAT] = 0
+New_MATLAB["Unnamed: 8"][29:temp_count_MAT] = 0
+New_MATLAB["Unnamed: 9"][29:temp_count_MAT] = 0
+New_MATLAB["Unnamed: 10"][29:temp_count_MAT] = 0
+New_MATLAB["Unnamed: 11"][29:temp_count_MAT] = 0
+New_MATLAB["Unnamed: 12"][29:temp_count_MAT] = 0
+New_MATLAB["Unnamed: 13"][29:temp_count_MAT] = 0
 ##=============================================
 # now want to export / write back to xlsx file.
 
@@ -123,7 +143,7 @@ print("=================================================")
 print("Do not include spaces after the prompt below")
 print("If you receive an access error, ensure that the file is not already open")
 user_input = input('What would you like to name your file? \nTYPE HERE:')
-user_input = user_input + ".xlsx"
+user_input = user_input + ".xls"
 
 writer = pd.ExcelWriter(user_input)
 New_MATLAB.to_excel(writer,'Sheet1', header=False, index=False)
