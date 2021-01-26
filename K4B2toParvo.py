@@ -71,6 +71,8 @@ temp_count = temp_count[0]
 
 #replace
 New_MATLAB['Unnamed: 1'][29:temp_count_MAT] = original_list
+# change mL values to L
+New_MATLAB['Unnamed: 1'][29:temp_count_MAT] = New_MATLAB['Unnamed: 1'][29:temp_count_MAT] *0.001
 #===============================================
 ### now we repeat what will later be itterated.
 
@@ -87,6 +89,8 @@ New_MATLAB['Unnamed: 3'][29:temp_count_MAT] = original_list
 original_list = df_original['VCO2'][2:].values.tolist()
 New_MATLAB['Unnamed: 4'][29:temp_count_MAT] = original_list
 
+#change mL values to L
+New_MATLAB['Unnamed: 4'][29:temp_count_MAT] = New_MATLAB['Unnamed: 1'][29:temp_count_MAT] *0.001
 #===============================================
 
 original_list = df_original['VE'][2:].values.tolist()
