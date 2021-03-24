@@ -1,4 +1,5 @@
-# Thesis_TAFT
+HSU Work
 
-This is where I will be building and saving the code that I am working on.
-I would like to continue to use Jupyter Notebook
+WIll be building scripts here revolving around data processing of experimental parameters. 
+
+Some content will be unavailable as rest of team does not operate using GITHUB
