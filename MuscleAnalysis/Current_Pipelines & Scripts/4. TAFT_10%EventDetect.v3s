@@ -1,0 +1,136 @@
+Event_Explicit
+/EVENT_NAME=START
+! /FRAME=
+/TIME=2
+;
+
+Event_Copy
+/EVENT_NAME=RIGHT FOOT STRIKE
+/NEW_EVENT_NAME=END
+/EVENT_INSTANCE=11
+! /RANGE_INSTANCE=0
+! /EVENT_SEQUENCE=
+! /EXCLUDE_EVENTS=
+/START_AT_EVENT=START
+! /END_AT_EVENT=
+/FRAME_OFFSET=10
+! /TIME_OFFSET=
+! /PERCENT_OFFSET=
+;
+
+Event_Copy
+/EVENT_NAME=RIGHT FOOT STRIKE
+/NEW_EVENT_NAME=RHS
+! /EVENT_INSTANCE=0
+! /RANGE_INSTANCE=0
+/EVENT_SEQUENCE=START+END
+! /EXCLUDE_EVENTS=
+! /START_AT_EVENT=
+! /END_AT_EVENT=
+/FRAME_OFFSET=0
+! /TIME_OFFSET=
+! /PERCENT_OFFSET=
+;
+
+Event_Copy
+/EVENT_NAME=RIGHT FOOT OFF
+/NEW_EVENT_NAME=RTO
+! /EVENT_INSTANCE=0
+! /RANGE_INSTANCE=0
+/EVENT_SEQUENCE=START+END
+! /EXCLUDE_EVENTS=
+! /START_AT_EVENT=
+! /END_AT_EVENT=
+/FRAME_OFFSET=0
+! /TIME_OFFSET=
+! /PERCENT_OFFSET=
+;
+
+! ------------------------------------------------------------------------------------------------------------
+!  Define Event Sequences to represent 10% intervals, each gait cycle
+! ------------------------------------------------------------------------------------------------------------
+
+Event_Define_Event_Sequence
+/EVENT_SEQUENCE_NAME=RCYCLE
+/EVENT_SEQUENCE=RHS+RHS
+! /EXCLUDE_EVENTS=
+! /INSIDE_OF_SEQUENCE=
+! /OFFSET_FROM_START=
+! /OFFSET_FROM_END=
+! /OFFSET_BY=PERCENT
+/EVENT_SEQUENCE_INSTANCE=0
+;
+
+! ------------------------------------------------------------------------------
+!  Define Event Sequences for time in stance
+! ------------------------------------------------------------------------------
+
+Event_Define_Event_Sequence
+/EVENT_SEQUENCE_NAME=RSTANCE
+/EVENT_SEQUENCE=RHS+RTO
+! /EXCLUDE_EVENTS=
+! /INSIDE_OF_SEQUENCE=
+! /OFFSET_FROM_START=
+! /OFFSET_FROM_END=
+! /OFFSET_BY=PERCENT
+/EVENT_SEQUENCE_INSTANCE=0
+;
+
+! ------------------------------------------------------------------------------
+!  Define Event Sequences for time in swing
+! ------------------------------------------------------------------------------
+
+Event_Define_Event_Sequence
+/EVENT_SEQUENCE_NAME=RSWING
+/EVENT_SEQUENCE=RTO+RHS
+! /EXCLUDE_EVENTS=
+! /INSIDE_OF_SEQUENCE=
+! /OFFSET_FROM_START=
+! /OFFSET_FROM_END=
+! /OFFSET_BY=PERCENT
+/EVENT_SEQUENCE_INSTANCE=0
+;
+
+For_Each
+/ITERATION_PARAMETER_NAME=NUM_ZERO_BASED
+/ITERATION_PARAMETER_COUNT_NAME=NUM_ONE_BASED
+/ITEMS=0+1+2+3+4+5+6+7+8+9
+;
+
+Set_Pipeline_Parameter_From_Expression
+ ! Start interval will be 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100
+ /PARAMETER_NAME=OFFSET1
+ /EXPRESSION=( &::NUM_ZERO_BASED& * 10 )
+ ! /AS_INTEGER=TRUE
+;
+
+Set_Pipeline_Parameter_From_Expression
+ ! End interval will be 9, 19, 29, 39, etc.
+ ! So the offset from the end will be:
+ !  91, 81, 71, 61, etc.
+ /PARAMETER_NAME=OFFSET2
+ /EXPRESSION= ( 100 - ( &::NUM_ONE_BASED& * 10 ) ) + 1
+ ! /AS_INTEGER=TRUE
+;
+
+Event_Define_Event_Sequence
+ /EVENT_SEQUENCE_NAME=RCYCLE_&::NUM_ONE_BASED&0
+ /EVENT_SEQUENCE=RHS+RHS
+ ! /EXCLUDE_EVENTS=
+ ! /INSIDE_OF_SEQUENCE=
+ /OFFSET_FROM_START=&::OFFSET1&
+ /OFFSET_FROM_END=-&::OFFSET2&
+ ! /OFFSET_BY=PERCENT
+ /EVENT_SEQUENCE_INSTANCE=0
+;
+
+End_For_Each
+/ITERATION_PARAMETER_NAME=NUM_ZERO_BASED
+;
+
+File_Save_As
+! /FILE_NAME=
+! /SET_PROMPT=Save CMO file as
+! /SAVE_EMBEDDED_GRAPHICS=FALSE
+;
+
